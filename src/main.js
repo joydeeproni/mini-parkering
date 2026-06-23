@@ -20,6 +20,7 @@ import { createStartScreen } from './ui/startScreen.js'
 import { createGameOver } from './ui/gameOver.js'
 import { createWarden } from './scene/warden.js'
 import { createTowTruck } from './scene/towTruck.js'
+import { createCarTimers } from './ui/carTimers.js'
 
 // --- Persistent Three.js setup (survives restarts) ---
 
@@ -89,6 +90,7 @@ let raycasterUtil = null
 let carPopup = null
 let gateAlert = null
 let shop = null
+let carTimers = null
 let gameOverShown = false
 
 // --- Screen controllers (created once, reference state via closures) ---
@@ -177,6 +179,7 @@ function startGame() {
   spawner = createSpawner(state, queueManager)
   hud = createHUD(state, gameClock)
   raycasterUtil = createRaycaster(camera, renderer)
+  carTimers = createCarTimers(parkingManager, lot, raycasterUtil)
   carPopup = createCarPopup(state, parkingManager, raycasterUtil, lot)
   gateAlert = createGateAlert(state, raycasterUtil, gate)
   shop = createShop(state, parkingManager, lot, building)
@@ -278,6 +281,7 @@ function animate() {
   hud.update()
   carPopup.update()
   gateAlert.update()
+  if (carTimers) carTimers.update()
 
   parkingManager.slots.forEach(slot => {
     if (slot.car) slot.car.update(delta)
