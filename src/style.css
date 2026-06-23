@@ -1,6 +1,6 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a2e; }
-#game-canvas { display: block; width: 100%; height: 100%; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a2e; -webkit-user-select: none; user-select: none; }
+#game-canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; }
 #ui-overlay {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   pointer-events: none;
@@ -147,3 +147,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a2e; }
 }
 .car-timer.overtime { color: #ef4444; }
 .car-timer.ticketed { color: #f59e0b; }
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .start-title h1 { font-size: 32px; }
+  #hud-money, #hud-time, #hud-day { font-size: 14px; padding: 6px 10px; }
+  #hud-shop-btn { padding: 8px 14px; font-size: 14px; }
+  .shop-grid { grid-template-columns: repeat(2, 1fr); }
+  .car-popup { min-width: 120px; }
+  .popup-btn { padding: 8px 10px; font-size: 12px; }
+}
