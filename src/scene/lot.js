@@ -11,8 +11,14 @@ export function createParkingLot(scene, state) {
   scene.add(group)
 
   let slotPositions = []
+  let currentState = state
+
+  function setState(newState) {
+    currentState = newState
+  }
 
   function rebuildLot() {
+    const state = currentState
     while (group.children.length) group.remove(group.children[0])
     slotPositions = []
 
@@ -85,7 +91,7 @@ export function createParkingLot(scene, state) {
   }
 
   rebuildLot()
-  return { group, get slotPositions() { return slotPositions }, rebuildLot }
+  return { group, get slotPositions() { return slotPositions }, rebuildLot, setState }
 }
 
 export { SLOT_WIDTH, SLOT_DEPTH, LANE_WIDTH }

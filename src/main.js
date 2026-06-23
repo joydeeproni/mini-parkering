@@ -103,7 +103,7 @@ let startScreen = null
 let gameOverScreen = null
 
 function handleTap(event) {
-  if (!state || !state.isRunning) return
+  if (!state || !state.isRunning || state.isPaused) return
   const hit = raycasterUtil.getClickedObject(event, scene)
   if (!hit) { carPopup.hide(); return }
 
@@ -138,6 +138,14 @@ function updateGateBreak(delta) {
   }
 }
 
+function showFeeAtGate(amount) {
+  if (!hud || !raycasterUtil) return
+  const screen = raycasterUtil.projectToScreen(
+    new THREE.Vector3(gate.group.position.x, 3, gate.group.position.z)
+  )
+  hud.showFeePopup(screen.x, screen.y, amount)
+}
+
 function clearAllCarMeshes() {
   // Remove parked car meshes from previous game
   if (parkingManager) {
@@ -164,7 +172,35 @@ function clearAllCarMeshes() {
   toRemove.forEach(obj => scene.remove(obj))
 }
 
+function cleanupUI() {
+  // Remove lingering DOM elements from previous game's UI systems
+  // Car timers container
+  const oldTimerContainers = document.querySelectorAll('.car-timers-container')
+  oldTimerContainers.forEach(el => el.remove())
+
+  // Car popup
+  if (carPopup) carPopup.hide()
+  const oldPopups = document.querySelectorAll('.car-popup')
+  oldPopups.forEach(el => el.remove())
+
+  // Gate alert
+  const oldAlerts = document.querySelectorAll('.gate-alert')
+  oldAlerts.forEach(el => el.remove())
+
+  // Shop overlay
+  if (shop) shop.close()
+  const oldShops = document.querySelectorAll('.shop-overlay')
+  oldShops.forEach(el => el.remove())
+
+  // Fee popups
+  const oldFees = document.querySelectorAll('.fee-popup')
+  oldFees.forEach(el => el.remove())
+}
+
 function startGame() {
+  // Clean up UI elements from previous game
+  cleanupUI()
+
   // Clear any lingering car meshes from previous game
   clearAllCarMeshes()
 
@@ -173,8 +209,15 @@ function startGame() {
   state.isRunning = true
   gameOverShown = false
 
+  // Point persistent scene objects at fresh game state so upgrades work
+  lot.setState(state)
+  building.setState(state)
+
+  // Rebuild lot and building to base size (fresh state has 0 upgrades)
+  lot.rebuildLot()
+  building.rebuild()
+
   // Re-create all game logic systems with fresh state
-  // Lot geometry stays at base size (fresh game always starts with 0 upgrades)
   gameClock = createGameClock(state)
   parkingManager = createParkingManager(state, lot, gate, scene)
   queueManager = createQueueManager(state, road, gate, parkingManager, lot, scene)
@@ -216,8 +259,17 @@ function startGame() {
 
 function handleGameOver() {
   state.isRunning = false
+  state.isPaused = false
   document.getElementById('hud').style.display = 'none'
+  if (shop && shop.isOpen) shop.close()
   if (carPopup) carPopup.hide()
+  // Remove gate alert and car timers from DOM
+  const alerts = document.querySelectorAll('.gate-alert')
+  alerts.forEach(el => el.remove())
+  const timerContainers = document.querySelectorAll('.car-timers-container')
+  timerContainers.forEach(el => {
+    while (el.firstChild) el.firstChild.remove()
+  })
   gameOverScreen.show()
 }
 
@@ -262,16 +314,27 @@ function animate() {
           parkingManager.releaseSlot(index)
           towTruck.towCar(carMesh, slotPos, { x: 0, z: 30 }, () => {
             state.money += fee
+            showFeeAtGate(fee)
           })
         } else {
-          queueManager.startCarLeaving(index, fee)
+          queueManager.startCarLeaving(index, fee, showFeeAtGate)
         }
       } else {
-        queueManager.startCarLeaving(index, fee)
+        queueManager.startCarLeaving(index, fee, showFeeAtGate)
       }
     } else {
+      const slotPos = lot.slotPositions[index]
       const result = parkingManager.releaseSlot(index)
-      if (result) scene.remove(result.car.mesh)
+      if (result) {
+        scene.remove(result.car.mesh)
+        // Show penalty popup at the slot where the car escaped
+        if (slotPos) {
+          const screen = raycasterUtil.projectToScreen(
+            new THREE.Vector3(slotPos.x, 2, slotPos.z)
+          )
+          hud.showFeePopup(screen.x, screen.y, fee)
+        }
+      }
     }
   }
 

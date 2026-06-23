@@ -65,7 +65,7 @@ export function createQueueManager(state, road, gate, parkingManager, lot, scene
     }
   }
 
-  function startCarLeaving(slotIndex, fee) {
+  function startCarLeaving(slotIndex, fee, onFeeCollected) {
     const result = parkingManager.releaseSlot(slotIndex)
     if (!result) return null
 
@@ -86,6 +86,7 @@ export function createQueueManager(state, road, gate, parkingManager, lot, scene
       scene.remove(car.mesh)
       gate.lowerBarrier()
       state.money += fee
+      if (onFeeCollected) onFeeCollected(fee)
     }
 
     return { car, fee }
