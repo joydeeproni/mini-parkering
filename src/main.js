@@ -15,6 +15,7 @@ import { createHUD } from './ui/hud.js'
 import { createRaycaster } from './utils/raycaster.js'
 import { createCarPopup } from './ui/carPopup.js'
 import { createGateAlert } from './ui/gateAlert.js'
+import { createShop } from './ui/shop.js'
 
 const canvas = document.getElementById('game-canvas')
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
@@ -62,6 +63,12 @@ const hud = createHUD(state, gameClock)
 const raycasterUtil = createRaycaster(camera, renderer)
 const carPopup = createCarPopup(state, parkingManager, raycasterUtil, lot)
 const gateAlert = createGateAlert(state, raycasterUtil, gate)
+const shop = createShop(state, parkingManager, lot, building)
+
+document.getElementById('hud-shop-btn').addEventListener('click', () => {
+  if (shop.isOpen) shop.close()
+  else shop.open()
+})
 
 function handleTap(event) {
   if (!state.isRunning) return
