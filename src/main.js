@@ -11,6 +11,7 @@ import { createLighting } from './scene/lighting.js'
 import { createParkingManager } from './game/parking.js'
 import { createQueueManager } from './game/queue.js'
 import { createSpawner } from './game/spawner.js'
+import { createHUD } from './ui/hud.js'
 
 const canvas = document.getElementById('game-canvas')
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
@@ -53,6 +54,7 @@ const lighting = createLighting(scene)
 const parkingManager = createParkingManager(state, lot, gate, scene)
 const queueManager = createQueueManager(state, road, gate, parkingManager, lot, scene)
 const spawner = createSpawner(state, queueManager)
+const hud = createHUD(state, gameClock)
 
 state.isRunning = true
 
@@ -87,6 +89,7 @@ function animate() {
 
   spawner.update(delta)
   queueManager.update(delta)
+  hud.update()
 
   // Update parked car animations
   parkingManager.slots.forEach(slot => {
@@ -102,4 +105,4 @@ function animate() {
 }
 animate()
 
-export { scene, camera, renderer, state, lot, gate, road, parkingManager, queueManager, spawner }
+export { scene, camera, renderer, state, lot, gate, road, parkingManager, queueManager, spawner, hud }
