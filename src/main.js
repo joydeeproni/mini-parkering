@@ -18,6 +18,8 @@ import { createGateAlert } from './ui/gateAlert.js'
 import { createShop } from './ui/shop.js'
 import { createStartScreen } from './ui/startScreen.js'
 import { createGameOver } from './ui/gameOver.js'
+import { createWarden } from './scene/warden.js'
+import { createTowTruck } from './scene/towTruck.js'
 
 // --- Persistent Three.js setup (survives restarts) ---
 
@@ -60,6 +62,10 @@ const gate = createGate(scene)
 const road = createRoad(scene)
 const trees = createTrees(scene, sceneState)
 const lighting = createLighting(scene)
+
+// Warden and tow truck — persistent scene groups, re-wired to fresh state each game
+let warden = null
+let towTruck = null
 
 window.addEventListener('resize', () => {
   const a = window.innerWidth / window.innerHeight
@@ -140,7 +146,9 @@ function clearAllCarMeshes() {
   // Safe approach: remove objects added by car factory (they are Groups at top level)
   const persistentGroups = new Set([
     lot.group, building.group, gate.group || null, road.group || null,
-    trees.group || null, grass
+    trees.group || null, grass,
+    warden ? warden.group : null,
+    towTruck ? towTruck.truckGroup : null,
   ].filter(Boolean))
 
   const toRemove = []
@@ -172,6 +180,14 @@ function startGame() {
   carPopup = createCarPopup(state, parkingManager, raycasterUtil, lot)
   gateAlert = createGateAlert(state, raycasterUtil, gate)
   shop = createShop(state, parkingManager, lot, building)
+
+  // Remove old warden/towTruck groups from scene before recreating
+  if (warden) scene.remove(warden.group)
+  if (towTruck) scene.remove(towTruck.truckGroup)
+
+  // Create warden and tow truck with fresh state
+  warden = createWarden(scene, state, lot)
+  towTruck = createTowTruck(scene)
 
   // Wire shop button (re-attach since shop is new)
   const shopBtn = document.getElementById('hud-shop-btn')
@@ -232,7 +248,22 @@ function animate() {
   const removals = parkingManager.update(delta)
   for (const { index, escaped, fee } of removals) {
     if (!escaped) {
-      queueManager.startCarLeaving(index, fee)
+      // Tow truck handles ticketed car removal when towActive and truck is free
+      if (state.towActive && towTruck && !towTruck.isBusy) {
+        const slot = parkingManager.slots[index]
+        const slotPos = lot.slotPositions[index]
+        if (slot && slot.car && slotPos) {
+          const carMesh = slot.car.mesh
+          parkingManager.releaseSlot(index)
+          towTruck.towCar(carMesh, slotPos, { x: 0, z: 30 }, () => {
+            state.money += fee
+          })
+        } else {
+          queueManager.startCarLeaving(index, fee)
+        }
+      } else {
+        queueManager.startCarLeaving(index, fee)
+      }
     } else {
       const result = parkingManager.releaseSlot(index)
       if (result) scene.remove(result.car.mesh)
@@ -242,6 +273,8 @@ function animate() {
   spawner.update(delta)
   queueManager.update(delta)
   updateGateBreak(delta)
+  if (warden) warden.update(delta)
+  if (towTruck) towTruck.update(delta)
   hud.update()
   carPopup.update()
   gateAlert.update()
