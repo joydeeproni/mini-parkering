@@ -16,6 +16,10 @@ import { createRaycaster } from './utils/raycaster.js'
 import { createCarPopup } from './ui/carPopup.js'
 import { createGateAlert } from './ui/gateAlert.js'
 import { createShop } from './ui/shop.js'
+import { createStartScreen } from './ui/startScreen.js'
+import { createGameOver } from './ui/gameOver.js'
+
+// --- Persistent Three.js setup (survives restarts) ---
 
 const canvas = document.getElementById('game-canvas')
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
@@ -44,56 +48,18 @@ grass.rotation.x = -Math.PI / 2
 grass.receiveShadow = true
 scene.add(grass)
 
-const state = createGameState()
-const gameClock = createGameClock(state)
 const threeClock = new THREE.Clock()
 
-const lot = createParkingLot(scene, state)
-const building = createBuilding(scene, state)
+// Use a base state for initial scene construction (base upgrades = 0, same as fresh game)
+const sceneState = createGameState()
+
+// Persistent scene objects — built once, geometry matches base layout
+const lot = createParkingLot(scene, sceneState)
+const building = createBuilding(scene, sceneState)
 const gate = createGate(scene)
 const road = createRoad(scene)
-const trees = createTrees(scene, state)
+const trees = createTrees(scene, sceneState)
 const lighting = createLighting(scene)
-
-const parkingManager = createParkingManager(state, lot, gate, scene)
-const queueManager = createQueueManager(state, road, gate, parkingManager, lot, scene)
-const spawner = createSpawner(state, queueManager)
-const hud = createHUD(state, gameClock)
-
-const raycasterUtil = createRaycaster(camera, renderer)
-const carPopup = createCarPopup(state, parkingManager, raycasterUtil, lot)
-const gateAlert = createGateAlert(state, raycasterUtil, gate)
-const shop = createShop(state, parkingManager, lot, building)
-
-document.getElementById('hud-shop-btn').addEventListener('click', () => {
-  if (shop.isOpen) shop.close()
-  else shop.open()
-})
-
-function handleTap(event) {
-  if (!state.isRunning) return
-  const hit = raycasterUtil.getClickedObject(event, scene)
-  if (!hit) { carPopup.hide(); return }
-
-  // Walk up the scene graph from the clicked mesh to find the top-level car group
-  let clickedMesh = hit.object
-  while (clickedMesh.parent && clickedMesh.parent !== scene) {
-    clickedMesh = clickedMesh.parent
-  }
-
-  // Find which slot this car belongs to
-  const slotIndex = parkingManager.slots.findIndex(s => s.car && s.car.mesh === clickedMesh)
-  if (slotIndex !== -1) {
-    carPopup.show(slotIndex)
-  } else {
-    carPopup.hide()
-  }
-}
-
-renderer.domElement.addEventListener('click', handleTap)
-renderer.domElement.addEventListener('touchstart', handleTap, { passive: true })
-
-state.isRunning = true
 
 window.addEventListener('resize', () => {
   const a = window.innerWidth / window.innerHeight
@@ -105,14 +71,56 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
+// --- Game logic systems (re-created on each restart) ---
+
+let state = null
+let gameClock = null
+let parkingManager = null
+let queueManager = null
+let spawner = null
+let hud = null
+let raycasterUtil = null
+let carPopup = null
+let gateAlert = null
+let shop = null
+let gameOverShown = false
+
+// --- Screen controllers (created once, reference state via closures) ---
+
+// We create these after startGame() sets state for the first time,
+// but we need forward references. Use wrapper callbacks.
+let startScreen = null
+let gameOverScreen = null
+
+function handleTap(event) {
+  if (!state || !state.isRunning) return
+  const hit = raycasterUtil.getClickedObject(event, scene)
+  if (!hit) { carPopup.hide(); return }
+
+  let clickedMesh = hit.object
+  while (clickedMesh.parent && clickedMesh.parent !== scene) {
+    clickedMesh = clickedMesh.parent
+  }
+
+  const slotIndex = parkingManager.slots.findIndex(s => s.car && s.car.mesh === clickedMesh)
+  if (slotIndex !== -1) {
+    carPopup.show(slotIndex)
+  } else {
+    carPopup.hide()
+  }
+}
+
+renderer.domElement.addEventListener('click', handleTap)
+renderer.domElement.addEventListener('touchstart', handleTap, { passive: true })
+
 function updateGateBreak(delta) {
   if (state.gateBroken) return
 
   const breakChance = 0.002 * (1 + state.difficulty * 0.3)
-  const reliability = 1 - state.upgrades.gateReliability * 0.15 // 0-4 levels = 0-60% reduction
+  const reliability = 1 - state.upgrades.gateReliability * 0.15
   state.gateBreakTimer += delta
 
-  if (state.gateBreakTimer > 5) { // check every 5 seconds
+  if (state.gateBreakTimer > 5) {
     state.gateBreakTimer = 0
     if (Math.random() < breakChance * reliability) {
       state.gateBroken = true
@@ -120,20 +128,112 @@ function updateGateBreak(delta) {
   }
 }
 
+function clearAllCarMeshes() {
+  // Remove parked car meshes from previous game
+  if (parkingManager) {
+    parkingManager.slots.forEach(slot => {
+      if (slot.car && slot.car.mesh) scene.remove(slot.car.mesh)
+    })
+  }
+  // Queue cars are managed by queueManager — clear them via scene children snapshot
+  // Remove any THREE.Group that isn't a known persistent object (grass, lot, building, etc.)
+  // Safe approach: remove objects added by car factory (they are Groups at top level)
+  const persistentGroups = new Set([
+    lot.group, building.group, gate.group || null, road.group || null,
+    trees.group || null, grass
+  ].filter(Boolean))
+
+  const toRemove = []
+  scene.children.forEach(child => {
+    if (child instanceof THREE.Group && !persistentGroups.has(child)) {
+      toRemove.push(child)
+    }
+  })
+  toRemove.forEach(obj => scene.remove(obj))
+}
+
+function startGame() {
+  // Clear any lingering car meshes from previous game
+  clearAllCarMeshes()
+
+  // Create fresh state
+  state = createGameState()
+  state.isRunning = true
+  gameOverShown = false
+
+  // Re-create all game logic systems with fresh state
+  // Lot geometry stays at base size (fresh game always starts with 0 upgrades)
+  gameClock = createGameClock(state)
+  parkingManager = createParkingManager(state, lot, gate, scene)
+  queueManager = createQueueManager(state, road, gate, parkingManager, lot, scene)
+  spawner = createSpawner(state, queueManager)
+  hud = createHUD(state, gameClock)
+  raycasterUtil = createRaycaster(camera, renderer)
+  carPopup = createCarPopup(state, parkingManager, raycasterUtil, lot)
+  gateAlert = createGateAlert(state, raycasterUtil, gate)
+  shop = createShop(state, parkingManager, lot, building)
+
+  // Wire shop button (re-attach since shop is new)
+  const shopBtn = document.getElementById('hud-shop-btn')
+  // Clone to remove old listeners, then re-attach
+  const newShopBtn = shopBtn.cloneNode(true)
+  shopBtn.parentNode.replaceChild(newShopBtn, shopBtn)
+  newShopBtn.addEventListener('click', () => {
+    if (shop.isOpen) shop.close()
+    else shop.open()
+  })
+
+  // Show HUD
+  document.getElementById('hud').style.display = 'flex'
+
+  // Update game over screen with fresh state reference on next game-over
+  gameOverScreen = createGameOver(state, () => {
+    document.getElementById('hud').style.display = 'none'
+    startGame()
+  })
+}
+
+function handleGameOver() {
+  state.isRunning = false
+  document.getElementById('hud').style.display = 'none'
+  if (carPopup) carPopup.hide()
+  gameOverScreen.show()
+}
+
+// --- Initial state for start screen (reads highscore from localStorage) ---
+const initialState = createGameState()
+
+startScreen = createStartScreen(initialState, () => {
+  startGame()
+})
+
+// Hide HUD until game starts
+document.getElementById('hud').style.display = 'none'
+
+// Show start screen
+startScreen.show()
+
+// --- Animation loop ---
+
 function animate() {
   requestAnimationFrame(animate)
   const delta = threeClock.getDelta()
-  gameClock.update(delta)
-  lighting.update(state.gameHour)
+
+  lighting.update(state ? state.gameHour : 7.0)
   gate.update(delta)
 
-  // Game system updates
+  if (!state || !state.isRunning) {
+    renderer.render(scene, camera)
+    return
+  }
+
+  gameClock.update(delta)
+
   const removals = parkingManager.update(delta)
   for (const { index, escaped, fee } of removals) {
     if (!escaped) {
       queueManager.startCarLeaving(index, fee)
     } else {
-      // Escaped car — release slot and remove mesh immediately
       const result = parkingManager.releaseSlot(index)
       if (result) scene.remove(result.car.mesh)
     }
@@ -146,18 +246,18 @@ function animate() {
   carPopup.update()
   gateAlert.update()
 
-  // Update parked car animations
   parkingManager.slots.forEach(slot => {
     if (slot.car) slot.car.update(delta)
   })
 
   // Check game over
-  if (state.isGameOver) {
-    // Game over state — future tasks will handle UI
+  if (state.isGameOver && !gameOverShown) {
+    gameOverShown = true
+    handleGameOver()
   }
 
   renderer.render(scene, camera)
 }
 animate()
 
-export { scene, camera, renderer, state, lot, gate, road, parkingManager, queueManager, spawner, hud }
+export { scene, camera, renderer, lot, gate, road }
