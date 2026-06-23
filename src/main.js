@@ -2,6 +2,12 @@ import * as THREE from 'three'
 import './style.css'
 import { createGameState } from './game/state.js'
 import { createGameClock } from './game/clock.js'
+import { createParkingLot } from './scene/lot.js'
+import { createBuilding } from './scene/building.js'
+import { createGate } from './scene/gate.js'
+import { createRoad } from './scene/road.js'
+import { createTrees } from './scene/trees.js'
+import { createLighting } from './scene/lighting.js'
 
 const canvas = document.getElementById('game-canvas')
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
@@ -21,28 +27,27 @@ const camera = new THREE.OrthographicCamera(
 camera.position.set(20, 20, 20)
 camera.lookAt(0, 0, 0)
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
-scene.add(ambientLight)
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.8)
-dirLight.position.set(10, 20, 10)
-dirLight.castShadow = true
-scene.add(dirLight)
+// Grass ground
+const grass = new THREE.Mesh(
+  new THREE.PlaneGeometry(60, 60),
+  new THREE.MeshLambertMaterial({ color: 0x4a7c59 })
+)
+grass.rotation.x = -Math.PI / 2
+grass.receiveShadow = true
+scene.add(grass)
 
 const state = createGameState()
 const gameClock = createGameClock(state)
 const threeClock = new THREE.Clock()
 
-// Temp: start game immediately for testing
-state.isRunning = true
+const lot = createParkingLot(scene, state)
+const building = createBuilding(scene, state)
+const gate = createGate(scene)
+const road = createRoad(scene)
+const trees = createTrees(scene, state)
+const lighting = createLighting(scene)
 
-// Temp ground plane
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(40, 40),
-  new THREE.MeshLambertMaterial({ color: 0x4a7c59 })
-)
-ground.rotation.x = -Math.PI / 2
-ground.receiveShadow = true
-scene.add(ground)
+state.isRunning = true
 
 window.addEventListener('resize', () => {
   const a = window.innerWidth / window.innerHeight
@@ -58,8 +63,10 @@ function animate() {
   requestAnimationFrame(animate)
   const delta = threeClock.getDelta()
   gameClock.update(delta)
+  lighting.update(state.gameHour)
+  gate.update(delta)
   renderer.render(scene, camera)
 }
 animate()
 
-export { scene, camera, renderer }
+export { scene, camera, renderer, state, lot, gate, road }
