@@ -1,5 +1,7 @@
 import * as THREE from 'three'
 import './style.css'
+import { createGameState } from './game/state.js'
+import { createGameClock } from './game/clock.js'
 
 const canvas = document.getElementById('game-canvas')
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
@@ -26,6 +28,13 @@ dirLight.position.set(10, 20, 10)
 dirLight.castShadow = true
 scene.add(dirLight)
 
+const state = createGameState()
+const gameClock = createGameClock(state)
+const threeClock = new THREE.Clock()
+
+// Temp: start game immediately for testing
+state.isRunning = true
+
 // Temp ground plane
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(40, 40),
@@ -47,6 +56,8 @@ window.addEventListener('resize', () => {
 
 function animate() {
   requestAnimationFrame(animate)
+  const delta = threeClock.getDelta()
+  gameClock.update(delta)
   renderer.render(scene, camera)
 }
 animate()
