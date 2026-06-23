@@ -14,6 +14,7 @@ import { createSpawner } from './game/spawner.js'
 import { createHUD } from './ui/hud.js'
 import { createRaycaster } from './utils/raycaster.js'
 import { createCarPopup } from './ui/carPopup.js'
+import { createGateAlert } from './ui/gateAlert.js'
 
 const canvas = document.getElementById('game-canvas')
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
@@ -60,6 +61,7 @@ const hud = createHUD(state, gameClock)
 
 const raycasterUtil = createRaycaster(camera, renderer)
 const carPopup = createCarPopup(state, parkingManager, raycasterUtil, lot)
+const gateAlert = createGateAlert(state, raycasterUtil, gate)
 
 function handleTap(event) {
   if (!state.isRunning) return
@@ -96,6 +98,21 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
+function updateGateBreak(delta) {
+  if (state.gateBroken) return
+
+  const breakChance = 0.002 * (1 + state.difficulty * 0.3)
+  const reliability = 1 - state.upgrades.gateReliability * 0.15 // 0-4 levels = 0-60% reduction
+  state.gateBreakTimer += delta
+
+  if (state.gateBreakTimer > 5) { // check every 5 seconds
+    state.gateBreakTimer = 0
+    if (Math.random() < breakChance * reliability) {
+      state.gateBroken = true
+    }
+  }
+}
+
 function animate() {
   requestAnimationFrame(animate)
   const delta = threeClock.getDelta()
@@ -117,8 +134,10 @@ function animate() {
 
   spawner.update(delta)
   queueManager.update(delta)
+  updateGateBreak(delta)
   hud.update()
   carPopup.update()
+  gateAlert.update()
 
   // Update parked car animations
   parkingManager.slots.forEach(slot => {
