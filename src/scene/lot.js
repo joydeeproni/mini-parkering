@@ -90,6 +90,7 @@ export function createParkingLot(scene, state) {
 
     const lineMat = new THREE.MeshBasicMaterial({ color: 0xf0ece4 })
     const lineY = 0.02
+    const LINE_W = 0.14
 
     const leftEdge = -LANE_WIDTH / 2
     const rightEdge = LANE_WIDTH / 2
@@ -125,7 +126,7 @@ export function createParkingLot(scene, state) {
     for (let c = 0; c <= cols; c++) {
       const x = leftEdge - c * SLOT_WIDTH
       const line = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.08, rows * SLOT_DEPTH),
+        new THREE.PlaneGeometry(LINE_W, rows * SLOT_DEPTH),
         lineMat
       )
       line.rotation.x = -Math.PI / 2
@@ -137,7 +138,7 @@ export function createParkingLot(scene, state) {
     for (let c = 0; c <= cols; c++) {
       const x = rightEdge + c * SLOT_WIDTH
       const line = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.08, rows * SLOT_DEPTH),
+        new THREE.PlaneGeometry(LINE_W, rows * SLOT_DEPTH),
         lineMat
       )
       line.rotation.x = -Math.PI / 2
@@ -150,7 +151,7 @@ export function createParkingLot(scene, state) {
       const z = -r * SLOT_DEPTH
 
       const hLineL = new THREE.Mesh(
-        new THREE.PlaneGeometry(blockWidth, 0.08),
+        new THREE.PlaneGeometry(blockWidth, LINE_W),
         lineMat
       )
       hLineL.rotation.x = -Math.PI / 2
@@ -158,7 +159,7 @@ export function createParkingLot(scene, state) {
       group.add(hLineL)
 
       const hLineR = new THREE.Mesh(
-        new THREE.PlaneGeometry(blockWidth, 0.08),
+        new THREE.PlaneGeometry(blockWidth, LINE_W),
         lineMat
       )
       hLineR.rotation.x = -Math.PI / 2
@@ -166,10 +167,87 @@ export function createParkingLot(scene, state) {
       group.add(hLineR)
     }
 
+    // T-marks at each slot divider along the lane edge
+    const tMarkLen = 0.6
+    for (let r = 0; r <= rows; r++) {
+      const z = -r * SLOT_DEPTH
+      for (const x of [leftEdge, rightEdge]) {
+        const dir = x < 0 ? -1 : 1
+        const tMark = new THREE.Mesh(
+          new THREE.PlaneGeometry(tMarkLen, LINE_W),
+          lineMat
+        )
+        tMark.rotation.x = -Math.PI / 2
+        tMark.position.set(x + dir * tMarkLen / 2, lineY, z)
+        group.add(tMark)
+      }
+    }
+
+    // Back-wall T-marks (at far end of each slot)
+    for (let col = 0; col < cols; col++) {
+      for (const side of [-1, 1]) {
+        const baseX = side < 0
+          ? leftEdge - (col + 0.5) * SLOT_WIDTH
+          : rightEdge + (col + 0.5) * SLOT_WIDTH
+        for (let r = 0; r < rows; r++) {
+          const z = -r * SLOT_DEPTH
+          const endZ = z - SLOT_DEPTH
+          const farX = side < 0 ? leftEdge - (col + 1) * SLOT_WIDTH : rightEdge + (col + 1) * SLOT_WIDTH
+          const nearX = side < 0 ? leftEdge - col * SLOT_WIDTH : rightEdge + col * SLOT_WIDTH
+          // Small perpendicular tick at far wall corners
+          const tickLen = 0.35
+          for (const cx of [nearX, farX]) {
+            if (r === rows - 1) {
+              const tick = new THREE.Mesh(
+                new THREE.PlaneGeometry(LINE_W, tickLen),
+                lineMat
+              )
+              tick.rotation.x = -Math.PI / 2
+              tick.position.set(cx, lineY, endZ + tickLen / 2)
+              group.add(tick)
+            }
+          }
+        }
+      }
+    }
+
+    // Spot number textures
+    const numMat = new THREE.MeshBasicMaterial({ transparent: true })
+    let spotNum = 1
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        for (const side of [-1, 1]) {
+          const sx = side < 0
+            ? leftEdge - (col + 0.5) * SLOT_WIDTH
+            : rightEdge + (col + 0.5) * SLOT_WIDTH
+          const sz = -row * SLOT_DEPTH - SLOT_DEPTH * 0.85
+          const numCanvas = document.createElement('canvas')
+          numCanvas.width = 32
+          numCanvas.height = 32
+          const nctx = numCanvas.getContext('2d')
+          nctx.fillStyle = 'rgba(240, 236, 228, 0.25)'
+          nctx.font = 'bold 22px Helvetica, Arial, sans-serif'
+          nctx.textAlign = 'center'
+          nctx.textBaseline = 'middle'
+          nctx.fillText(String(spotNum), 16, 17)
+          const numTex = new THREE.CanvasTexture(numCanvas)
+          numTex.magFilter = THREE.LinearFilter
+          const numPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(1.2, 1.2),
+            new THREE.MeshBasicMaterial({ map: numTex, transparent: true })
+          )
+          numPlane.rotation.x = -Math.PI / 2
+          numPlane.position.set(sx, lineY + 0.002, sz)
+          group.add(numPlane)
+          spotNum++
+        }
+      }
+    }
+
     // Lane center dashes
     for (let i = 0; i < rows * 2; i++) {
       const dash = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.1, 0.8),
+        new THREE.PlaneGeometry(0.12, 0.9),
         lineMat
       )
       dash.rotation.x = -Math.PI / 2
@@ -181,7 +259,7 @@ export function createParkingLot(scene, state) {
     const laneLineMat = new THREE.MeshBasicMaterial({ color: 0xe0c878 })
     for (const x of [leftEdge, rightEdge]) {
       const laneLine = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.1, rows * SLOT_DEPTH + LOT_PADDING),
+        new THREE.PlaneGeometry(0.16, rows * SLOT_DEPTH + LOT_PADDING),
         laneLineMat
       )
       laneLine.rotation.x = -Math.PI / 2
@@ -193,7 +271,7 @@ export function createParkingLot(scene, state) {
     const arrowMat = new THREE.MeshBasicMaterial({ map: arrowTexture, transparent: true })
     for (let i = 0; i < Math.min(rows, 3); i++) {
       const arrow = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.2, 2.4),
+        new THREE.PlaneGeometry(1.4, 2.8),
         arrowMat
       )
       arrow.rotation.x = -Math.PI / 2
