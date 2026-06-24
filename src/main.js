@@ -1,10 +1,10 @@
 import * as THREE from 'three'
 import './style.css'
-import { createGameState } from './game/state.js'
+import { createGameState, getBaseRows, getBaseCols } from './game/state.js'
 import { createGameClock } from './game/clock.js'
 import { createParkingLot } from './scene/lot.js'
 import { createBuilding } from './scene/building.js'
-import { createGate } from './scene/gate.js'
+import { createGates } from './scene/gate.js'
 import { createRoad } from './scene/road.js'
 import { createTrees } from './scene/trees.js'
 import { createLighting } from './scene/lighting.js'
@@ -34,17 +34,17 @@ const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x87ceeb)
 
 const aspect = window.innerWidth / window.innerHeight
-const initSize = aspect < 1 ? 40 : 30
+const initSize = aspect < 1 ? 50 : 40
 const camera = new THREE.OrthographicCamera(
   -initSize * aspect / 2, initSize * aspect / 2,
   initSize / 2, -initSize / 2, 0.1, 100
 )
 camera.position.set(20, 20, 20)
-camera.lookAt(0, 0, 0)
+camera.lookAt(0, 0, -3)
 
 // Grass ground
 const grass = new THREE.Mesh(
-  new THREE.PlaneGeometry(60, 60),
+  new THREE.PlaneGeometry(80, 80),
   new THREE.MeshLambertMaterial({ color: 0x4a7c59 })
 )
 grass.rotation.x = -Math.PI / 2
@@ -59,7 +59,7 @@ const sceneState = createGameState()
 // Persistent scene objects — built once, geometry matches base layout
 const lot = createParkingLot(scene, sceneState)
 const building = createBuilding(scene, sceneState)
-const gate = createGate(scene)
+const gates = createGates(scene)
 const road = createRoad(scene)
 const trees = createTrees(scene, sceneState)
 const lighting = createLighting(scene)
@@ -70,7 +70,7 @@ let towTruck = null
 
 function updateCamera() {
   const a = window.innerWidth / window.innerHeight
-  const size = a < 1 ? 40 : 30
+  const size = a < 1 ? 50 : 40
   camera.left = -size * a / 2
   camera.right = size * a / 2
   camera.top = size / 2
@@ -94,6 +94,7 @@ let gateAlert = null
 let shop = null
 let carTimers = null
 let gameOverShown = false
+let lastDifficulty = 1
 
 // --- Screen controllers (created once, reference state via closures) ---
 
@@ -141,7 +142,7 @@ function updateGateBreak(delta) {
 function showFeeAtGate(amount) {
   if (!hud || !raycasterUtil) return
   const screen = raycasterUtil.projectToScreen(
-    new THREE.Vector3(gate.group.position.x, 3, gate.group.position.z)
+    new THREE.Vector3(gates.exit.group.position.x, 3, gates.exit.group.position.z)
   )
   hud.showFeePopup(screen.x, screen.y, amount)
 }
@@ -157,8 +158,9 @@ function clearAllCarMeshes() {
   // Remove any THREE.Group that isn't a known persistent object (grass, lot, building, etc.)
   // Safe approach: remove objects added by car factory (they are Groups at top level)
   const persistentGroups = new Set([
-    lot.group, building.group, gate.group || null, road.group || null,
-    trees.group || null, grass,
+    lot.group, building.group,
+    gates.entry.group || null, gates.exit.group || null,
+    road.group || null, trees.group || null, grass,
     warden ? warden.group : null,
     towTruck ? towTruck.truckGroup : null,
   ].filter(Boolean))
@@ -208,6 +210,7 @@ function startGame() {
   state = createGameState()
   state.isRunning = true
   gameOverShown = false
+  lastDifficulty = 1
 
   // Point persistent scene objects at fresh game state so upgrades work
   lot.setState(state)
@@ -219,14 +222,14 @@ function startGame() {
 
   // Re-create all game logic systems with fresh state
   gameClock = createGameClock(state)
-  parkingManager = createParkingManager(state, lot, gate, scene)
-  queueManager = createQueueManager(state, road, gate, parkingManager, lot, scene)
+  parkingManager = createParkingManager(state, lot, gates, scene)
+  queueManager = createQueueManager(state, road, gates, parkingManager, lot, scene)
   spawner = createSpawner(state, queueManager)
   hud = createHUD(state, gameClock)
   raycasterUtil = createRaycaster(camera, renderer)
   carTimers = createCarTimers(parkingManager, lot, raycasterUtil)
   carPopup = createCarPopup(state, parkingManager, raycasterUtil, lot)
-  gateAlert = createGateAlert(state, raycasterUtil, gate)
+  gateAlert = createGateAlert(state, raycasterUtil, gates.entry)
   shop = createShop(state, parkingManager, lot, building)
 
   // Remove old warden/towTruck groups from scene before recreating
@@ -293,7 +296,7 @@ function animate() {
   const delta = threeClock.getDelta()
 
   lighting.update(state ? state.gameHour : 7.0)
-  gate.update(delta)
+  gates.update(delta)
 
   if (!state || !state.isRunning) {
     renderer.render(scene, camera)
@@ -301,6 +304,28 @@ function animate() {
   }
 
   gameClock.update(delta)
+
+  // Expand lot when difficulty increases and level config changes
+  if (state.difficulty !== lastDifficulty) {
+    const oldRows = getBaseRows({ difficulty: lastDifficulty })
+    const oldCols = getBaseCols({ difficulty: lastDifficulty })
+    const newRows = getBaseRows(state)
+    const newCols = getBaseCols(state)
+    lastDifficulty = state.difficulty
+
+    if (newRows !== oldRows || newCols !== oldCols) {
+      lot.rebuildLot()
+      parkingManager.rebuildSlots()
+      building.rebuild()
+      // Reposition parked cars to updated slot positions
+      parkingManager.slots.forEach((slot, i) => {
+        if (slot.car && lot.slotPositions[i]) {
+          const pos = lot.slotPositions[i]
+          slot.car.mesh.position.set(pos.x, 0, pos.z)
+        }
+      })
+    }
+  }
 
   const removals = parkingManager.update(delta)
   for (const { index, escaped, fee } of removals) {
@@ -312,7 +337,7 @@ function animate() {
         if (slot && slot.car && slotPos) {
           const carMesh = slot.car.mesh
           parkingManager.releaseSlot(index)
-          towTruck.towCar(carMesh, slotPos, { x: 0, z: 30 }, () => {
+          towTruck.towCar(carMesh, slotPos, { x: -3, z: 35 }, () => {
             state.money += fee
             showFeeAtGate(fee)
           })
@@ -362,4 +387,4 @@ function animate() {
 }
 animate()
 
-export { scene, camera, renderer, lot, gate, road }
+export { scene, camera, renderer, lot, gates, road }

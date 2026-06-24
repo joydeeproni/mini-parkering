@@ -3,8 +3,6 @@ import { getBaseRows, getBaseCols, getQueueCapacity } from '../game/state.js'
 
 const UPGRADES = [
   { key: 'gateReliability', name: 'Gate Reliability', desc: 'Breaks less often', icon: '🔧' },
-  { key: 'addRow', name: 'Add Row', desc: '+1 parking row', icon: '➕' },
-  { key: 'addCol', name: 'Add Column', desc: '+1 parking column', icon: '➕' },
   { key: 'queueCapacity', name: 'Queue Capacity', desc: '+2 queue slots', icon: '🚗' },
   { key: 'warden', name: 'Parking Warden', desc: 'Auto-ticket 5 game-min', icon: '👮' },
   { key: 'tow', name: 'Auto-Tow', desc: 'Instant tow 5 game-min', icon: '🚛' },
@@ -29,7 +27,7 @@ export function createShop(state, parkingManager, lot, building) {
 
     const info = document.createElement('div')
     info.className = 'shop-info'
-    info.textContent = `Lot: ${getBaseRows(state)}×${getBaseCols(state)} | Queue: ${getQueueCapacity(state)} | Gate Lvl: ${state.upgrades.gateReliability + 1}/5`
+    info.textContent = `Level ${state.difficulty} | Lot: ${getBaseRows(state) * getBaseCols(state) * 2} slots | Queue: ${getQueueCapacity(state)} | Gate: ${state.upgrades.gateReliability + 1}/5`
     shopEl.appendChild(info)
 
     const grid = document.createElement('div')
@@ -58,13 +56,8 @@ export function createShop(state, parkingManager, lot, building) {
         `
         card.addEventListener('click', () => {
           if (buyUpgrade(upgrade.key, state)) {
-            if (upgrade.key === 'addRow' || upgrade.key === 'addCol') {
-              lot.rebuildLot()
-              parkingManager.rebuildSlots()
-              building.rebuild()
-            }
             close()
-            open() // reopen with updated state
+            open()
           }
         })
       }

@@ -1,6 +1,6 @@
 import { GAME_HOURS_PER_REAL_SECOND } from './clock.js'
 
-export function createParkingManager(state, lot, gate, scene) {
+export function createParkingManager(state, lot, gates, scene) {
   // Each slot: { car, timerRemaining (game-minutes), overstayTime, ticketed, ticketFee }
   let slots = []
 

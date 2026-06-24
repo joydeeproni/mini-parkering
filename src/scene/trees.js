@@ -25,17 +25,16 @@ export function createTree(x, z) {
 export function createTrees(scene, state) {
   const group = new THREE.Group()
 
-  // Trees along left side
-  for (let i = 0; i < 6; i++) {
-    group.add(createTree(-8 - Math.random() * 2, -i * 3 + 1))
+  for (let i = 0; i < 7; i++) {
+    group.add(createTree(-14 - Math.random() * 3, -i * 4.5 + 3))
   }
-  // Trees along right side
-  for (let i = 0; i < 6; i++) {
-    group.add(createTree(8 + Math.random() * 2, -i * 3 + 1))
+  for (let i = 0; i < 7; i++) {
+    group.add(createTree(14 + Math.random() * 3, -i * 4.5 + 3))
   }
-  // Trees near entrance
-  group.add(createTree(-5, 4))
-  group.add(createTree(5, 4))
+  group.add(createTree(-7, 6))
+  group.add(createTree(7, 6))
+  group.add(createTree(-12, 10))
+  group.add(createTree(12, 10))
 
   scene.add(group)
   return { group }

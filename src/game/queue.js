@@ -1,19 +1,20 @@
 import { getQueueCapacity } from './state.js'
 import { createCar } from '../scene/car.js'
 
-export function createQueueManager(state, road, gate, parkingManager, lot, scene) {
+export function createQueueManager(state, road, gates, parkingManager, lot, scene) {
   const queue = []
   let processingCar = null
+  const leavingCars = []
 
   function addCar() {
     const capacity = getQueueCapacity(state)
     if (queue.length >= capacity) {
-      return false // overflow!
+      return false
     }
     const car = createCar()
     const queuePos = road.queuePositions[queue.length]
     car.mesh.position.set(queuePos.x, 0, queuePos.z)
-    car.mesh.rotation.y = Math.PI // face toward gate
+    car.mesh.rotation.y = Math.PI
     scene.add(car.mesh)
     queue.push(car)
     return true
@@ -25,19 +26,16 @@ export function createQueueManager(state, road, gate, parkingManager, lot, scene
     const car = queue.shift()
     processingCar = car
 
-    // Reassign queue positions for remaining cars
     queue.forEach((c, i) => {
       const pos = road.queuePositions[i]
       c.setPath([{ x: pos.x, z: pos.z }], { speed: 4 })
     })
 
-    // Try to assign a slot
     const slotIndex = parkingManager.assignSlot(car)
     if (slotIndex === null) {
-      // No slots available — car leaves without penalty
       const exitPath = [
-        { x: 0, z: 4 },
-        { x: 0, z: 30 },
+        { x: 3, z: 4 },
+        { x: 3, z: 35 },
       ]
       car.setPath(exitPath, { speed: 6 })
       car.onArrive = () => {
@@ -48,19 +46,20 @@ export function createQueueManager(state, road, gate, parkingManager, lot, scene
     }
 
     const slotPos = lot.slotPositions[slotIndex]
-    gate.liftBarrier()
+    gates.entry.liftBarrier()
 
-    // Gate is at z=2 in world space; drive past it then into slot
+    // Entry path: right lane → through entry gate → center lane → slot
     const entryPath = [
-      { x: 0, z: 3 },   // approach gate
-      { x: 0, z: 1 },   // past gate
-      { x: 0, z: slotPos.z }, // drive down lane to row
-      { x: slotPos.x, z: slotPos.z }, // pull into slot
+      { x: 3, z: 3 },
+      { x: 3, z: 1 },
+      { x: 0, z: 0 },
+      { x: 0, z: slotPos.z },
+      { x: slotPos.x, z: slotPos.z },
     ]
 
     car.setPath(entryPath, { speed: 5 })
     car.onArrive = () => {
-      gate.lowerBarrier()
+      gates.entry.lowerBarrier()
       processingCar = null
     }
   }
@@ -72,19 +71,25 @@ export function createQueueManager(state, road, gate, parkingManager, lot, scene
     const { car } = result
     const slotPos = lot.slotPositions[slotIndex]
 
+    gates.exit.liftBarrier()
+
+    // Exit path: slot → center lane → through exit gate (left) → drive away
     const exitPath = [
       { x: slotPos.x, z: slotPos.z },
       { x: 0, z: slotPos.z },
-      { x: 0, z: 1 },
-      { x: 0, z: 3 },
-      { x: 0, z: 30 },
+      { x: 0, z: 0 },
+      { x: -3, z: 1 },
+      { x: -3, z: 3 },
+      { x: -3, z: 35 },
     ]
 
-    gate.liftBarrier()
     car.setPath(exitPath, { speed: 5 })
+    leavingCars.push(car)
     car.onArrive = () => {
       scene.remove(car.mesh)
-      gate.lowerBarrier()
+      gates.exit.lowerBarrier()
+      const idx = leavingCars.indexOf(car)
+      if (idx !== -1) leavingCars.splice(idx, 1)
       state.money += fee
       if (onFeeCollected) onFeeCollected(fee)
     }
@@ -93,11 +98,10 @@ export function createQueueManager(state, road, gate, parkingManager, lot, scene
   }
 
   function update(delta) {
-    // Update all queued car animations
     queue.forEach(c => c.update(delta))
     if (processingCar) processingCar.update(delta)
+    leavingCars.forEach(c => c.update(delta))
 
-    // Try to process next car if gate is free
     if (!processingCar) processNext()
   }
 

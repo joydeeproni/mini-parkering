@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { getBaseRows, getBaseCols } from '../game/state.js'
-import { SLOT_WIDTH, LANE_WIDTH } from './lot.js'
+import { SLOT_WIDTH, SLOT_DEPTH, LANE_WIDTH } from './lot.js'
 
 export function createBuilding(scene, state) {
   const group = new THREE.Group()
@@ -21,7 +21,7 @@ export function createBuilding(scene, state) {
       new THREE.BoxGeometry(buildingWidth, 3, 4),
       new THREE.MeshLambertMaterial({ color: 0xb8a088 })
     )
-    body.position.set(0, 1.5, -getBaseRows(currentState) * 3.5 - 3)
+    body.position.set(0, 1.5, -getBaseRows(currentState) * SLOT_DEPTH - 3)
     body.castShadow = true
     body.receiveShadow = true
     group.add(body)
@@ -31,7 +31,7 @@ export function createBuilding(scene, state) {
       new THREE.BoxGeometry(buildingWidth + 1, 0.3, 5),
       new THREE.MeshLambertMaterial({ color: 0x8b4513 })
     )
-    roof.position.set(0, 3.15, -getBaseRows(currentState) * 3.5 - 3)
+    roof.position.set(0, 3.15, -getBaseRows(currentState) * SLOT_DEPTH - 3)
     roof.castShadow = true
     group.add(roof)
 
@@ -40,7 +40,7 @@ export function createBuilding(scene, state) {
       new THREE.BoxGeometry(1.2, 2, 0.1),
       new THREE.MeshLambertMaterial({ color: 0x4a3728 })
     )
-    door.position.set(0, 1, -getBaseRows(currentState) * 3.5 - 1.05)
+    door.position.set(0, 1, -getBaseRows(currentState) * SLOT_DEPTH - 1.05)
     group.add(door)
 
     // Windows
@@ -49,7 +49,7 @@ export function createBuilding(scene, state) {
         new THREE.BoxGeometry(1, 1, 0.1),
         new THREE.MeshLambertMaterial({ color: 0x87ceeb })
       )
-      win.position.set(xOff, 2, -getBaseRows(currentState) * 3.5 - 1.05)
+      win.position.set(xOff, 2, -getBaseRows(currentState) * SLOT_DEPTH - 1.05)
       group.add(win)
     }
   }
