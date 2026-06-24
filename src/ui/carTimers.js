@@ -9,7 +9,6 @@ export function createCarTimers(parkingManager, lot, raycasterUtil) {
   let timerEls = []
 
   function update() {
-    // Remove old timers
     timerEls.forEach(el => el.remove())
     timerEls = []
 
@@ -27,28 +26,32 @@ export function createCarTimers(parkingManager, lot, raycasterUtil) {
         new THREE.Vector3(pos.x, 2.2, pos.z)
       )
 
-      const el = document.createElement('div')
+      const bar = document.createElement('div')
+      bar.className = 'car-timer-bar'
 
-      if (slot.timerRemaining > 0) {
-        const mins = Math.ceil(slot.timerRemaining)
-        const h = Math.floor(mins / 60)
-        const m = mins % 60
-        el.className = 'car-timer'
-        el.textContent = h > 0 ? `${h}:${String(m).padStart(2, '0')}` : `${m}m`
-      } else {
-        const mins = Math.ceil(slot.overstayTime)
-        el.className = 'car-timer overtime'
-        el.textContent = `+${mins}m`
-        if (slot.ticketed) {
-          el.classList.add('ticketed')
-          el.textContent = `🎫 +${mins}m`
-        }
+      const fill = document.createElement('div')
+      fill.className = 'car-timer-fill'
+
+      if (slot.timerRemaining > 0 && slot.initialDuration > 0) {
+        const frac = slot.timerRemaining / slot.initialDuration
+        fill.style.width = `${Math.max(0, Math.min(100, frac * 100))}%`
+
+        if (frac > 0.5) fill.classList.add('ok')
+        else if (frac > 0.25) fill.classList.add('warn')
+        else fill.classList.add('danger')
+
+        if (frac <= 0.15) bar.classList.add('needs-action')
+      } else if (slot.timerRemaining <= 0) {
+        fill.style.width = '100%'
+        fill.classList.add('overtime')
+        bar.classList.add('needs-action')
       }
 
-      el.style.left = `${screen.x}px`
-      el.style.top = `${screen.y}px`
-      container.appendChild(el)
-      timerEls.push(el)
+      bar.appendChild(fill)
+      bar.style.left = `${screen.x}px`
+      bar.style.top = `${screen.y}px`
+      container.appendChild(bar)
+      timerEls.push(bar)
     }
   }
 

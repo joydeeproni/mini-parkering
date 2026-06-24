@@ -28,9 +28,11 @@ export function createParkingManager(state, lot, gates, scene, getTuning) {
     const emptyIndex = slots.findIndex(s => s.car === null)
     if (emptyIndex === -1) return null
 
+    const duration = getParkingDuration()
     slots[emptyIndex] = {
       car,
-      timerRemaining: getParkingDuration(),
+      timerRemaining: duration,
+      initialDuration: duration,
       overstayTime: 0,
       ticketed: false,
       ticketFee: 0,

@@ -8,7 +8,7 @@ export function createGateAlert(state, raycasterUtil, gate) {
     if (alertEl) return
     alertEl = document.createElement('div')
     alertEl.className = 'gate-alert'
-    alertEl.innerHTML = '⚠️ GATE BROKEN<br><span>Tap to fix!</span>'
+    alertEl.innerHTML = '⚠️ Gate broken<br><span>Tap to fix</span>'
     alertEl.addEventListener('click', () => {
       state.gateBroken = false
       hide()

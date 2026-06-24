@@ -21,7 +21,7 @@ export function createCarPopup(state, parkingManager, raycasterUtil, lot) {
     timerDiv.className = 'car-popup-timer'
     if (isOverstaying) {
       const mins = Math.ceil(slot.overstayTime)
-      timerDiv.textContent = `OVERTIME +${mins}m`
+      timerDiv.textContent = `Overtime +${mins}m`
       timerDiv.classList.add('overtime')
     } else {
       const mins = Math.ceil(slot.timerRemaining)
@@ -34,7 +34,7 @@ export function createCarPopup(state, parkingManager, raycasterUtil, lot) {
     if (slot.ticketed) {
       const badge = document.createElement('div')
       badge.className = 'car-popup-badge'
-      badge.textContent = 'TICKETED'
+      badge.textContent = 'Ticketed'
       popupEl.appendChild(badge)
     }
 

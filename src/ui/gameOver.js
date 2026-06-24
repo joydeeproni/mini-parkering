@@ -10,15 +10,15 @@ export function createGameOver(state, onRestart) {
     el = document.createElement('div')
     el.className = 'gameover-screen'
     el.innerHTML = `
-      <h1>GAME OVER</h1>
-      <div class="gameover-reason">Queue overflow!</div>
-      <div class="gameover-score">Score: $${Math.max(0, state.money)}</div>
+      <h1>Game over</h1>
+      <div class="gameover-reason">Queue overflow</div>
+      <div class="gameover-score">$${Math.max(0, state.money)}</div>
       <div class="gameover-high">Best: $${state.highscore}</div>
       <div class="gameover-stats">
         <div>Day ${state.dayCount}</div>
         <div>Difficulty ${state.difficulty}</div>
       </div>
-      <button class="start-btn play">Play Again</button>
+      <button class="start-btn play">Play again</button>
     `
 
     el.querySelector('.play').addEventListener('click', () => {

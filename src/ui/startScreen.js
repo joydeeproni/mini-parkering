@@ -8,7 +8,7 @@ export function createStartScreen(state, onPlay) {
     el.innerHTML = `
       <div class="start-title">
         <div class="title-badge">P</div>
-        <h1>MINI<br>PARKERING</h1>
+        <h1>Mini<br>Parkering</h1>
       </div>
       <div class="start-buttons">
         <button class="start-btn play">Play</button>

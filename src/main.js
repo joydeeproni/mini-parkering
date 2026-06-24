@@ -46,7 +46,7 @@ camera.lookAt(0, 0, -3)
 // Grass ground
 const grass = new THREE.Mesh(
   new THREE.PlaneGeometry(80, 80),
-  new THREE.MeshLambertMaterial({ color: 0x8fb896 })
+  new THREE.MeshLambertMaterial({ color: 0x7ec850 })
 )
 grass.rotation.x = -Math.PI / 2
 grass.receiveShadow = true
