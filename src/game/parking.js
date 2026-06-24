@@ -1,7 +1,6 @@
 import { GAME_HOURS_PER_REAL_SECOND } from './clock.js'
 
-export function createParkingManager(state, lot, gates, scene) {
-  // Each slot: { car, timerRemaining (game-minutes), overstayTime, ticketed, ticketFee }
+export function createParkingManager(state, lot, gates, scene, getTuning) {
   let slots = []
 
   function rebuildSlots() {
@@ -14,13 +13,24 @@ export function createParkingManager(state, lot, gates, scene) {
   }
   rebuildSlots()
 
+  function getTuningValues() {
+    return getTuning ? getTuning() : null
+  }
+
+  function getParkingDuration() {
+    const t = getTuningValues()
+    const base = t ? t.timing.baseParkingMinutes : 120
+    const shrink = t ? t.timing.parkingShrinkPerLevel : 12
+    return Math.max(60, base - (state.difficulty - 1) * shrink)
+  }
+
   function assignSlot(car) {
     const emptyIndex = slots.findIndex(s => s.car === null)
     if (emptyIndex === -1) return null
 
     slots[emptyIndex] = {
       car,
-      timerRemaining: 120, // 2 game-hours in game-minutes
+      timerRemaining: getParkingDuration(),
       overstayTime: 0,
       ticketed: false,
       ticketFee: 0,
@@ -38,11 +48,17 @@ export function createParkingManager(state, lot, gates, scene) {
   }
 
   function getBaseFee() {
-    return 10 + state.difficulty * 2
+    const t = getTuningValues()
+    const base = t ? t.economy.baseFee : 10
+    const perDiff = t ? t.economy.feePerDifficulty : 2
+    return base + state.difficulty * perDiff
   }
 
   function getTicketFee() {
-    return 25 + state.difficulty * 5
+    const t = getTuningValues()
+    const base = t ? t.economy.ticketBase : 25
+    const perDiff = t ? t.economy.ticketPerDifficulty : 5
+    return base + state.difficulty * perDiff
   }
 
   function ticketCar(slotIndex) {
@@ -58,15 +74,16 @@ export function createParkingManager(state, lot, gates, scene) {
     if (!slot || !slot.car) return false
     if (state.money < 15) return false
     state.money -= 15
-    slot.timerRemaining += 60 // +1 game-hour
+    slot.timerRemaining += 60
     slot.overstayTime = 0
     return true
   }
 
-  const ESCAPE_THRESHOLD = 30 // game-minutes before unticketed overstayer escapes
-  const TICKETED_LEAVE_DELAY = 10 // game-minutes after ticketed before leaving
-
   function update(delta) {
+    const t = getTuningValues()
+    const ESCAPE_THRESHOLD = t ? t.timing.escapeThreshold : 240
+    const TICKETED_LEAVE_DELAY = t ? t.timing.ticketedLeaveDelay : 120
+
     const gameMinutesDelta = delta * GAME_HOURS_PER_REAL_SECOND * 60
     const carsToRemove = []
 
@@ -80,21 +97,17 @@ export function createParkingManager(state, lot, gates, scene) {
           slot.timerRemaining = 0
         }
       } else {
-        // Overstaying
         slot.overstayTime += gameMinutesDelta
 
-        // Auto-ticket by warden
         if (state.wardenActive && !slot.ticketed) {
           ticketCar(i)
         }
 
         if (!slot.ticketed && slot.overstayTime >= ESCAPE_THRESHOLD) {
-          // Car escapes! Penalty
           const penalty = getTicketFee()
           state.money -= penalty
           carsToRemove.push({ index: i, escaped: true, fee: -penalty })
         } else if (slot.ticketed && slot.overstayTime >= TICKETED_LEAVE_DELAY) {
-          // Ticketed car leaves
           carsToRemove.push({ index: i, escaped: false, fee: slot.ticketFee })
         }
       }

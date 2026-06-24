@@ -7,7 +7,7 @@ export function createTowTruck(scene) {
   // Truck body (larger than car)
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(2, 0.8, 3.5),
-    new THREE.MeshLambertMaterial({ color: 0xf59e0b })
+    new THREE.MeshLambertMaterial({ color: 0xd4a860 })
   )
   body.position.y = 0.4
   truckGroup.add(body)
@@ -15,7 +15,7 @@ export function createTowTruck(scene) {
   // Cabin
   const cabin = new THREE.Mesh(
     new THREE.BoxGeometry(1.8, 0.7, 1.2),
-    new THREE.MeshLambertMaterial({ color: 0xfbbf24 })
+    new THREE.MeshLambertMaterial({ color: 0xe0c080 })
   )
   cabin.position.set(0, 1, 0.8)
   truckGroup.add(cabin)

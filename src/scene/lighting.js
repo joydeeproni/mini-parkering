@@ -2,8 +2,8 @@ import * as THREE from 'three'
 
 // Keyframes at hours: 0, 5, 7, 12(noon), 18, 20, 24(=0)
 const KEY_HOURS = [0, 5, 7, 12, 18, 20, 24]
-const KEY_SKY =     [0x0a0a1e, 0x0a0a1e, 0xff9966, 0x87ceeb, 0xff9966, 0x1a1a3e, 0x0a0a1e]
-const KEY_AMBIENT = [0x111133, 0x222244, 0xffaa77, 0xffffff, 0xffaa77, 0x222255, 0x111133]
+const KEY_SKY =     [0x1a1a30, 0x1a1a30, 0xe8b090, 0xc5dde8, 0xe8b090, 0x2a2a48, 0x1a1a30]
+const KEY_AMBIENT = [0x1a1a38, 0x2a2a48, 0xe8b898, 0xf5f0e8, 0xe8b898, 0x2a2a50, 0x1a1a38]
 const KEY_SUN_INT = [0.05, 0.1, 0.5, 1.0, 0.5, 0.1, 0.05]
 const KEY_AMB_INT = [0.15, 0.2, 0.5, 0.6, 0.5, 0.2, 0.15]
 

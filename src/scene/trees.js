@@ -5,7 +5,7 @@ export function createTree(x, z) {
 
   const trunk = new THREE.Mesh(
     new THREE.CylinderGeometry(0.15, 0.2, 1.2),
-    new THREE.MeshLambertMaterial({ color: 0x6b4226 })
+    new THREE.MeshLambertMaterial({ color: 0x8b7355 })
   )
   trunk.position.set(x, 0.6, z)
   trunk.castShadow = true
@@ -13,7 +13,7 @@ export function createTree(x, z) {
 
   const foliage = new THREE.Mesh(
     new THREE.SphereGeometry(0.9, 8, 6),
-    new THREE.MeshLambertMaterial({ color: 0x2d5a27 })
+    new THREE.MeshLambertMaterial({ color: 0x6aaa7a })
   )
   foliage.position.set(x, 1.6, z)
   foliage.castShadow = true

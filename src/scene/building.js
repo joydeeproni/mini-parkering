@@ -19,7 +19,7 @@ export function createBuilding(scene, state) {
     // Main body
     const body = new THREE.Mesh(
       new THREE.BoxGeometry(buildingWidth, 3, 4),
-      new THREE.MeshLambertMaterial({ color: 0xb8a088 })
+      new THREE.MeshLambertMaterial({ color: 0xd4c8b8 })
     )
     body.position.set(0, 1.5, -getBaseRows(currentState) * SLOT_DEPTH - 3)
     body.castShadow = true
@@ -29,7 +29,7 @@ export function createBuilding(scene, state) {
     // Roof
     const roof = new THREE.Mesh(
       new THREE.BoxGeometry(buildingWidth + 1, 0.3, 5),
-      new THREE.MeshLambertMaterial({ color: 0x8b4513 })
+      new THREE.MeshLambertMaterial({ color: 0x6b8e9e })
     )
     roof.position.set(0, 3.15, -getBaseRows(currentState) * SLOT_DEPTH - 3)
     roof.castShadow = true
@@ -38,7 +38,7 @@ export function createBuilding(scene, state) {
     // Door
     const door = new THREE.Mesh(
       new THREE.BoxGeometry(1.2, 2, 0.1),
-      new THREE.MeshLambertMaterial({ color: 0x4a3728 })
+      new THREE.MeshLambertMaterial({ color: 0x6a5d50 })
     )
     door.position.set(0, 1, -getBaseRows(currentState) * SLOT_DEPTH - 1.05)
     group.add(door)
@@ -47,7 +47,7 @@ export function createBuilding(scene, state) {
     for (const xOff of [-3, 3]) {
       const win = new THREE.Mesh(
         new THREE.BoxGeometry(1, 1, 0.1),
-        new THREE.MeshLambertMaterial({ color: 0x87ceeb })
+        new THREE.MeshLambertMaterial({ color: 0xa8d4e6 })
       )
       win.position.set(xOff, 2, -getBaseRows(currentState) * SLOT_DEPTH - 1.05)
       group.add(win)

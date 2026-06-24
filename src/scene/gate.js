@@ -7,7 +7,7 @@ function createSingleGate(scene, x, z, facingLeft) {
   const boothSide = facingLeft ? 1.2 : -1.2
   const booth = new THREE.Mesh(
     new THREE.BoxGeometry(1.4, 2.5, 1.4),
-    new THREE.MeshLambertMaterial({ color: 0xddd8c4 })
+    new THREE.MeshLambertMaterial({ color: 0xe8e0d0 })
   )
   booth.position.set(boothSide, 1.25, 0)
   booth.castShadow = true
@@ -35,7 +35,7 @@ function createSingleGate(scene, x, z, facingLeft) {
   const armDir = facingLeft ? -1 : 1
   const arm = new THREE.Mesh(
     new THREE.BoxGeometry(3.5, 0.15, 0.15),
-    new THREE.MeshLambertMaterial({ color: 0xff4444 })
+    new THREE.MeshLambertMaterial({ color: 0xe07060 })
   )
   arm.position.set(armDir * 1.75, 0, 0)
   armPivot.add(arm)
@@ -75,14 +75,14 @@ export function createGates(scene) {
 
   const entrySign = new THREE.Mesh(
     new THREE.BoxGeometry(2.5, 0.6, 0.1),
-    new THREE.MeshLambertMaterial({ color: 0x22aa44 })
+    new THREE.MeshLambertMaterial({ color: 0x6aaa78 })
   )
   entrySign.position.set(3, 3.2, 2)
   scene.add(entrySign)
 
   const exitSign = new THREE.Mesh(
     new THREE.BoxGeometry(2.5, 0.6, 0.1),
-    new THREE.MeshLambertMaterial({ color: 0xdd3333 })
+    new THREE.MeshLambertMaterial({ color: 0xc65050 })
   )
   exitSign.position.set(-3, 3.2, 2)
   scene.add(exitSign)

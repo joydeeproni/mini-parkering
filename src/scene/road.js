@@ -7,7 +7,7 @@ export function createRoad(scene) {
   const roadWidth = 12
   const road = new THREE.Mesh(
     new THREE.PlaneGeometry(roadWidth, 35),
-    new THREE.MeshLambertMaterial({ color: 0x444444 })
+    new THREE.MeshLambertMaterial({ color: 0xc9bfb0 })
   )
   road.rotation.x = -Math.PI / 2
   road.position.set(0, 0.005, 19)
@@ -15,7 +15,7 @@ export function createRoad(scene) {
   group.add(road)
 
   // Center divider (dashed)
-  const lineMat = new THREE.MeshBasicMaterial({ color: 0xcccccc })
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0xf0ece4 })
   for (let i = 0; i < 12; i++) {
     const dash = new THREE.Mesh(
       new THREE.PlaneGeometry(0.15, 1),
@@ -45,7 +45,7 @@ export function createRoad(scene) {
   for (const xOff of [-halfRoad - 0.75, halfRoad + 0.75]) {
     const sidewalk = new THREE.Mesh(
       new THREE.BoxGeometry(1.5, 0.15, 35),
-      new THREE.MeshLambertMaterial({ color: 0x999999 })
+      new THREE.MeshLambertMaterial({ color: 0xd4cfc5 })
     )
     sidewalk.position.set(xOff, 0.075, 19)
     group.add(sidewalk)

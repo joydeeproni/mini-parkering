@@ -3,10 +3,10 @@
   "configurations": [
     {
       "name": "Mini Parkering",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
       "port": 5174,
-      "autoPort": true
+      "cwd": "/Users/jds-tactile/Documents/GitHub/mini-parkering-html"
     }
   ]
 }

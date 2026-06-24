@@ -21,6 +21,7 @@ import { createGameOver } from './ui/gameOver.js'
 import { createWarden } from './scene/warden.js'
 import { createTowTruck } from './scene/towTruck.js'
 import { createCarTimers } from './ui/carTimers.js'
+import { createDebugPanel } from './ui/debugPanel.js'
 
 // --- Persistent Three.js setup (survives restarts) ---
 
@@ -31,7 +32,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.shadowMap.enabled = true
 
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0x87ceeb)
+scene.background = new THREE.Color(0xc5dde8)
 
 const aspect = window.innerWidth / window.innerHeight
 const initSize = aspect < 1 ? 50 : 40
@@ -45,7 +46,7 @@ camera.lookAt(0, 0, -3)
 // Grass ground
 const grass = new THREE.Mesh(
   new THREE.PlaneGeometry(80, 80),
-  new THREE.MeshLambertMaterial({ color: 0x4a7c59 })
+  new THREE.MeshLambertMaterial({ color: 0x8fb896 })
 )
 grass.rotation.x = -Math.PI / 2
 grass.receiveShadow = true
@@ -96,6 +97,8 @@ let carTimers = null
 let gameOverShown = false
 let lastDifficulty = 1
 
+const debugPanel = createDebugPanel()
+
 // --- Screen controllers (created once, reference state via closures) ---
 
 // We create these after startGame() sets state for the first time,
@@ -127,7 +130,8 @@ renderer.domElement.addEventListener('touchstart', handleTap, { passive: true })
 function updateGateBreak(delta) {
   if (state.gateBroken) return
 
-  const breakChance = 0.002 * (1 + state.difficulty * 0.3)
+  const t = debugPanel.getValues()
+  const breakChance = t.gate.breakChance * (1 + state.difficulty * t.gate.breakDifficultyScale)
   const reliability = 1 - state.upgrades.gateReliability * 0.15
   state.gateBreakTimer += delta
 
@@ -221,10 +225,11 @@ function startGame() {
   building.rebuild()
 
   // Re-create all game logic systems with fresh state
-  gameClock = createGameClock(state)
-  parkingManager = createParkingManager(state, lot, gates, scene)
+  const getTuning = () => debugPanel.getValues()
+  gameClock = createGameClock(state, getTuning)
+  parkingManager = createParkingManager(state, lot, gates, scene, getTuning)
   queueManager = createQueueManager(state, road, gates, parkingManager, lot, scene)
-  spawner = createSpawner(state, queueManager)
+  spawner = createSpawner(state, queueManager, getTuning)
   hud = createHUD(state, gameClock)
   raycasterUtil = createRaycaster(camera, renderer)
   carTimers = createCarTimers(parkingManager, lot, raycasterUtil)
@@ -387,4 +392,4 @@ function animate() {
 }
 animate()
 
-export { scene, camera, renderer, lot, gates, road }
+export { scene, camera, renderer, lot, gates, road, debugPanel }

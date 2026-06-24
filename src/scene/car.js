@@ -1,17 +1,17 @@
 import * as THREE from 'three'
 
 const CAR_COLORS = [
-  0xe74c3c, // red
-  0x3498db, // blue
-  0xf39c12, // yellow/orange
-  0x2ecc71, // green
-  0x9b59b6, // purple
-  0xe8dcc8, // beige
-  0x1abc9c, // teal
-  0x34495e, // dark gray
+  0xd4726a, // muted coral
+  0x6a9ebd, // soft steel blue
+  0xe8c86a, // warm sand yellow
+  0x7ab88a, // sage green
+  0x9e84b0, // dusty lavender
+  0xe0d5c4, // warm cream
+  0x6db8a8, // soft teal
+  0x8a9aa8, // blue-gray
 ]
 
-const STRIPE_COLORS = [0xffffff, 0xffdd44, 0x333333, 0xff6600]
+const STRIPE_COLORS = [0xf0ece4, 0xe8d8a0, 0x606060, 0xd0926a]
 
 export function createCar(colorIndex) {
   const color = CAR_COLORS[colorIndex ?? Math.floor(Math.random() * CAR_COLORS.length)]
@@ -29,7 +29,7 @@ export function createCar(colorIndex) {
   // Round the body edges visually with a slightly inset top
   const cabin = new THREE.Mesh(
     new THREE.BoxGeometry(1.3, 0.5, 1.4),
-    new THREE.MeshLambertMaterial({ color: 0x87ceeb })
+    new THREE.MeshLambertMaterial({ color: 0xc8dce8 })
   )
   cabin.position.set(0, 0.85, -0.2)
   cabin.castShadow = true
