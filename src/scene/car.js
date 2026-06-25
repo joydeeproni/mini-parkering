@@ -85,6 +85,8 @@ export function createCar(colorIndex) {
   // Glow state
   let glowPulsing = false
   let glowTime = 0
+  let glowIntroTime = 0
+  let glowIntroActive = false
   const BASE_RING_SCALE = 1.0
 
   // Animation state
@@ -107,7 +109,19 @@ export function createCar(colorIndex) {
   }
 
   function update(delta) {
-    if (glowPulsing) {
+    if (glowIntroActive) {
+      glowIntroTime += delta
+      const t = Math.min(glowIntroTime / 0.4, 1)
+      const ease = 1 - Math.pow(1 - t, 3)
+      const s = ease * BASE_RING_SCALE
+      glowRing.scale.set(s, s, s)
+      ringMat.opacity = ease * 0.7
+      if (t >= 1) {
+        glowIntroActive = false
+        glowPulsing = true
+        glowTime = 0
+      }
+    } else if (glowPulsing) {
       glowTime += delta * 2.5
       const pulse = 0.5 + 0.5 * Math.sin(glowTime)
       ringMat.opacity = 0.4 + pulse * 0.5
@@ -149,11 +163,17 @@ export function createCar(colorIndex) {
   function setGlow(color, opacity) {
     if (opacity === -1) {
       ringMat.color.setHex(color)
-      glowPulsing = true
+      if (!glowPulsing && !glowIntroActive) {
+        glowIntroActive = true
+        glowIntroTime = 0
+        glowRing.scale.set(0, 0, 0)
+        ringMat.opacity = 0
+      }
     } else {
       ringMat.color.setHex(color)
       ringMat.opacity = opacity
       glowPulsing = false
+      glowIntroActive = false
       glowRing.scale.set(1, 1, 1)
     }
   }
