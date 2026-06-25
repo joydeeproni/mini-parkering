@@ -69,6 +69,14 @@ export function createCar(colorIndex) {
     group.add(tl)
   }
 
+  // Glow ring — flat circle on ground, hidden by default
+  const ringGeo = new THREE.RingGeometry(1.4, 1.7, 32)
+  ringGeo.rotateX(-Math.PI / 2)
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0x6bbd6b, transparent: true, opacity: 0 })
+  const glowRing = new THREE.Mesh(ringGeo, ringMat)
+  glowRing.position.y = 0.02
+  group.add(glowRing)
+
   // Animation state
   let waypoints = []
   let waypointIndex = 0
@@ -120,10 +128,16 @@ export function createCar(colorIndex) {
     }
   }
 
+  function setGlow(color, opacity) {
+    ringMat.color.setHex(color)
+    ringMat.opacity = opacity
+  }
+
   return {
     mesh: group,
     setPath,
     update,
+    setGlow,
     get isAnimating() { return isAnimating },
     set onArrive(fn) { onArrive = fn },
     get onArrive() { return onArrive },

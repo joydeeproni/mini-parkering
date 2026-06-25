@@ -22,6 +22,7 @@ export function createGameState() {
     isGameOver: false,
     isPaused: false,
     highscore: parseInt(localStorage.getItem('miniParkering_highscore') || '0'),
+    bestDays: parseInt(localStorage.getItem('miniParkering_bestDays') || '1'),
     upgrades: {
       gateReliability: 0,
       extraQueueSlots: 0,
@@ -41,7 +42,9 @@ export function createGameState() {
 export function saveHighscore(state) {
   if (state.money > state.highscore) {
     state.highscore = state.money
+    state.bestDays = state.dayCount
     localStorage.setItem('miniParkering_highscore', String(state.money))
+    localStorage.setItem('miniParkering_bestDays', String(state.dayCount))
   }
 }
 

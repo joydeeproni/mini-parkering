@@ -10,18 +10,21 @@ export function createGameOver(state, onRestart) {
     el = document.createElement('div')
     el.className = 'gameover-screen'
     el.innerHTML = `
-      <h1>Game over</h1>
-      <div class="gameover-reason">Queue overflow</div>
-      <div class="gameover-score">$${Math.max(0, state.money)}</div>
-      <div class="gameover-high">Best: $${state.highscore}</div>
-      <div class="gameover-stats">
-        <div>Day ${state.dayCount}</div>
-        <div>Difficulty ${state.difficulty}</div>
+      <div class="gameover-top">
+        <h1>Overload</h1>
+        <div class="gameover-reason">Your parking lot is<br>overloaded, but you made</div>
       </div>
-      <button class="start-btn play">Play again</button>
+      <div class="gameover-bottom">
+        <div class="gameover-score">$${Math.max(0, state.money)} in ${state.dayCount} days</div>
+        <div class="gameover-stats">
+          <div>Best $${state.highscore}</div>
+          <div>Day ${state.dayCount}</div>
+        </div>
+        <button class="gameover-play">Play again</button>
+      </div>
     `
 
-    el.querySelector('.play').addEventListener('click', () => {
+    el.querySelector('.gameover-play').addEventListener('click', () => {
       hide()
       onRestart()
     })

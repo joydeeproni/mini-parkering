@@ -6,18 +6,18 @@ export function createStartScreen(state, onPlay) {
     el = document.createElement('div')
     el.className = 'start-screen'
     el.innerHTML = `
-      <div class="start-title">
-        <div class="title-badge">P</div>
+      <div class="start-top">
         <h1>Mini<br>Parkering</h1>
+        <div class="start-subtitle">Issue tickets as much as possible</div>
       </div>
-      <div class="start-buttons">
-        <button class="start-btn play">Play</button>
-        <button class="start-btn highscore">Highscore: $${state.highscore}</button>
-        <button class="start-btn options">Options</button>
+      <div class="start-bottom">
+        <div class="start-best-label">Best you did is</div>
+        <div class="start-best-score">$${state.highscore} in ${state.bestDays || 1} days</div>
+        <button class="start-play">Play</button>
       </div>
     `
 
-    el.querySelector('.play').addEventListener('click', () => {
+    el.querySelector('.start-play').addEventListener('click', () => {
       hide()
       onPlay()
     })

@@ -1,16 +1,21 @@
-export function createHUD(state, gameClock) {
+export function createHUD(state, gameClock, queueManager) {
   const moneyEl = document.getElementById('hud-money')
-  const timeEl = document.getElementById('hud-time')
   const dayEl = document.getElementById('hud-day')
+  const queueEl = document.getElementById('hud-queue')
   const overlay = document.getElementById('ui-overlay')
 
   function update() {
     moneyEl.textContent = `$${state.money}`
-    timeEl.textContent = gameClock.getTimeString()
     dayEl.textContent = `Day ${state.dayCount}`
 
-    if (state.money < 0) moneyEl.style.color = '#ef4444'
-    else moneyEl.style.color = '#4ade80'
+    if (state.money < 0) {
+      moneyEl.classList.add('negative')
+    } else {
+      moneyEl.classList.remove('negative')
+    }
+
+    const queueCount = queueManager ? queueManager.queueLength : 0
+    queueEl.textContent = `${queueCount} car${queueCount !== 1 ? 's' : ''} waiting`
   }
 
   function showFeePopup(screenX, screenY, amount) {
