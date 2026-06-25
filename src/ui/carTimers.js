@@ -36,23 +36,17 @@ export function createCarTimers(parkingManager, lot, raycasterUtil) {
         const frac = slot.timerRemaining / slot.initialDuration
         fill.style.width = `${Math.max(0, Math.min(100, frac * 100))}%`
 
-        if (frac > 0.5) {
-          fill.classList.add('ok')
-          slot.car.setGlow(0x6bbd6b, 0.6)
-        } else if (frac > 0.25) {
-          fill.classList.add('warn')
-          slot.car.setGlow(0xe8a840, 0.7)
-        } else {
-          fill.classList.add('danger')
-          slot.car.setGlow(0xe05050, 0.8)
-        }
+        if (frac > 0.5) fill.classList.add('ok')
+        else if (frac > 0.25) fill.classList.add('warn')
+        else fill.classList.add('danger')
 
         if (frac <= 0.15) bar.classList.add('needs-action')
+        slot.car.setGlow(0, 0)
       } else if (slot.timerRemaining <= 0) {
         fill.style.width = '100%'
         fill.classList.add('overtime')
         bar.classList.add('needs-action')
-        slot.car.setGlow(0xe05050, 0.9)
+        slot.car.setGlow(0xe05050, -1)
       }
 
       bar.appendChild(fill)

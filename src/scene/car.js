@@ -82,6 +82,11 @@ export function createCar(colorIndex) {
   glowRing.renderOrder = 2
   group.add(glowRing)
 
+  // Glow state
+  let glowPulsing = false
+  let glowTime = 0
+  const BASE_RING_SCALE = 1.0
+
   // Animation state
   let waypoints = []
   let waypointIndex = 0
@@ -102,6 +107,14 @@ export function createCar(colorIndex) {
   }
 
   function update(delta) {
+    if (glowPulsing) {
+      glowTime += delta * 2.5
+      const pulse = 0.5 + 0.5 * Math.sin(glowTime)
+      ringMat.opacity = 0.4 + pulse * 0.5
+      const s = BASE_RING_SCALE + pulse * 0.15
+      glowRing.scale.set(s, s, s)
+    }
+
     if (!isAnimating || waypoints.length === 0) return
 
     const target = waypoints[waypointIndex]
@@ -134,8 +147,15 @@ export function createCar(colorIndex) {
   }
 
   function setGlow(color, opacity) {
-    ringMat.color.setHex(color)
-    ringMat.opacity = opacity
+    if (opacity === -1) {
+      ringMat.color.setHex(color)
+      glowPulsing = true
+    } else {
+      ringMat.color.setHex(color)
+      ringMat.opacity = opacity
+      glowPulsing = false
+      glowRing.scale.set(1, 1, 1)
+    }
   }
 
   return {
