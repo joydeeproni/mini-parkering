@@ -69,12 +69,17 @@ export function createCar(colorIndex) {
     group.add(tl)
   }
 
-  // Glow ring — flat circle on ground, hidden by default
-  const ringGeo = new THREE.RingGeometry(1.4, 1.7, 32)
+  // Glow ring — flat disc on ground, additive blending for true glow
+  const ringGeo = new THREE.CircleGeometry(2.2, 32)
   ringGeo.rotateX(-Math.PI / 2)
-  const ringMat = new THREE.MeshBasicMaterial({ color: 0x6bbd6b, transparent: true, opacity: 0 })
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0x6bbd6b, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+  })
   const glowRing = new THREE.Mesh(ringGeo, ringMat)
-  glowRing.position.y = 0.02
+  glowRing.position.y = 0.15
+  glowRing.renderOrder = 2
   group.add(glowRing)
 
   // Animation state

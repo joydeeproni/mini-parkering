@@ -38,13 +38,13 @@ export function createCarTimers(parkingManager, lot, raycasterUtil) {
 
         if (frac > 0.5) {
           fill.classList.add('ok')
-          slot.car.setGlow(0x6bbd6b, 0.25)
+          slot.car.setGlow(0x6bbd6b, 0.6)
         } else if (frac > 0.25) {
           fill.classList.add('warn')
-          slot.car.setGlow(0xe8a840, 0.35)
+          slot.car.setGlow(0xe8a840, 0.7)
         } else {
           fill.classList.add('danger')
-          slot.car.setGlow(0xe05050, 0.45)
+          slot.car.setGlow(0xe05050, 0.8)
         }
 
         if (frac <= 0.15) bar.classList.add('needs-action')
@@ -52,7 +52,7 @@ export function createCarTimers(parkingManager, lot, raycasterUtil) {
         fill.style.width = '100%'
         fill.classList.add('overtime')
         bar.classList.add('needs-action')
-        slot.car.setGlow(0xe05050, 0.5)
+        slot.car.setGlow(0xe05050, 0.9)
       }
 
       bar.appendChild(fill)
