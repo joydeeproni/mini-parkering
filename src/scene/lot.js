@@ -71,10 +71,10 @@ export function createParkingLot(scene, state) {
     const lotWidth = cols * SLOT_WIDTH * 2 + LANE_WIDTH + LOT_PADDING * 2
     const lotDepth = rows * SLOT_DEPTH + LOT_PADDING * 2
 
-    // Surface
+    // Surface — blue-grey asphalt like Crossy Road
     const surface = new THREE.Mesh(
       new THREE.PlaneGeometry(lotWidth, lotDepth),
-      new THREE.MeshLambertMaterial({ color: 0x8a8578 })
+      new THREE.MeshLambertMaterial({ color: 0x5c6c7c })
     )
     surface.rotation.x = -Math.PI / 2
     surface.position.set(0, 0.01, -lotDepth / 2 + LOT_PADDING)
@@ -84,7 +84,7 @@ export function createParkingLot(scene, state) {
 
     // Curb
     const curbGeo = new THREE.BoxGeometry(lotWidth + 0.3, 0.15, lotDepth + 0.3)
-    const curb = new THREE.Mesh(curbGeo, new THREE.MeshLambertMaterial({ color: 0xb8b2a8 }))
+    const curb = new THREE.Mesh(curbGeo, new THREE.MeshLambertMaterial({ color: 0x98a4ac }))
     curb.position.set(0, 0.075, -lotDepth / 2 + LOT_PADDING)
     group.add(curb)
 

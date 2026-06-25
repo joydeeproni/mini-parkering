@@ -22,7 +22,7 @@ export function createShop(state, parkingManager, lot, building) {
     shopEl.className = 'shop-overlay'
 
     const title = document.createElement('h2')
-    title.textContent = 'Upgrade Shop'
+    title.textContent = 'Upgrades'
     shopEl.appendChild(title)
 
     const info = document.createElement('div')
@@ -43,7 +43,7 @@ export function createShop(state, parkingManager, lot, building) {
         card.innerHTML = `
           <div class="shop-icon">${upgrade.icon}</div>
           <div class="shop-name">${upgrade.name}</div>
-          <div class="shop-desc">MAX LEVEL</div>
+          <div class="shop-desc">Max level</div>
         `
       } else {
         const canAfford = state.money >= cost

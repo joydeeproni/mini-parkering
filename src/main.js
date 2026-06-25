@@ -16,6 +16,7 @@ import { createRaycaster } from './utils/raycaster.js'
 import { createCarPopup } from './ui/carPopup.js'
 import { createGateAlert } from './ui/gateAlert.js'
 import { createShop } from './ui/shop.js'
+import { createUpgradeBar } from './ui/upgradeBar.js'
 import { createStartScreen } from './ui/startScreen.js'
 import { createGameOver } from './ui/gameOver.js'
 import { createWarden } from './scene/warden.js'
@@ -46,7 +47,7 @@ camera.lookAt(0, 0, -3)
 // Grass ground
 const grass = new THREE.Mesh(
   new THREE.PlaneGeometry(80, 80),
-  new THREE.MeshLambertMaterial({ color: 0x8fb896 })
+  new THREE.MeshLambertMaterial({ color: 0x7ec850 })
 )
 grass.rotation.x = -Math.PI / 2
 grass.receiveShadow = true
@@ -93,6 +94,7 @@ let raycasterUtil = null
 let carPopup = null
 let gateAlert = null
 let shop = null
+let upgradeBar = null
 let carTimers = null
 let gameOverShown = false
 let lastDifficulty = 1
@@ -230,7 +232,7 @@ function startGame() {
   parkingManager = createParkingManager(state, lot, gates, scene, getTuning)
   queueManager = createQueueManager(state, road, gates, parkingManager, lot, scene)
   spawner = createSpawner(state, queueManager, getTuning)
-  hud = createHUD(state, gameClock)
+  hud = createHUD(state, gameClock, queueManager)
   raycasterUtil = createRaycaster(camera, renderer)
   carTimers = createCarTimers(parkingManager, lot, raycasterUtil)
   carPopup = createCarPopup(state, parkingManager, raycasterUtil, lot)
@@ -245,15 +247,9 @@ function startGame() {
   warden = createWarden(scene, state, lot)
   towTruck = createTowTruck(scene)
 
-  // Wire shop button (re-attach since shop is new)
-  const shopBtn = document.getElementById('hud-shop-btn')
-  // Clone to remove old listeners, then re-attach
-  const newShopBtn = shopBtn.cloneNode(true)
-  shopBtn.parentNode.replaceChild(newShopBtn, shopBtn)
-  newShopBtn.addEventListener('click', () => {
-    if (shop.isOpen) shop.close()
-    else shop.open()
-  })
+  // Upgrade bar (bottom-left icon buttons)
+  upgradeBar = createUpgradeBar(state)
+  upgradeBar.show()
 
   // Show HUD
   document.getElementById('hud').style.display = 'flex'
@@ -270,6 +266,7 @@ function handleGameOver() {
   state.isPaused = false
   document.getElementById('hud').style.display = 'none'
   if (shop && shop.isOpen) shop.close()
+  if (upgradeBar) upgradeBar.hide()
   if (carPopup) carPopup.hide()
   // Remove gate alert and car timers from DOM
   const alerts = document.querySelectorAll('.gate-alert')
@@ -377,6 +374,7 @@ function animate() {
   carPopup.update()
   gateAlert.update()
   if (carTimers) carTimers.update()
+  if (upgradeBar) upgradeBar.update()
 
   parkingManager.slots.forEach(slot => {
     if (slot.car) slot.car.update(delta)

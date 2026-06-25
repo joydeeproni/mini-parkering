@@ -16,53 +16,52 @@ export function createCarPopup(state, parkingManager, raycasterUtil, lot) {
     popupEl = document.createElement('div')
     popupEl.className = 'car-popup'
 
-    // Timer display
+    const progressDiv = document.createElement('div')
+    progressDiv.className = 'car-popup-progress'
+    if (!isOverstaying && slot.initialDuration > 0) {
+      const frac = slot.timerRemaining / slot.initialDuration
+      progressDiv.style.width = `${Math.max(0, Math.min(100, frac * 100))}%`
+    } else {
+      progressDiv.style.width = '0%'
+    }
+    popupEl.appendChild(progressDiv)
+
     const timerDiv = document.createElement('div')
     timerDiv.className = 'car-popup-timer'
     if (isOverstaying) {
       const mins = Math.ceil(slot.overstayTime)
-      timerDiv.textContent = `OVERTIME +${mins}m`
+      timerDiv.textContent = `${mins} sec left`
       timerDiv.classList.add('overtime')
     } else {
       const mins = Math.ceil(slot.timerRemaining)
       const h = Math.floor(mins / 60)
       const m = mins % 60
-      timerDiv.textContent = `${h}h ${m}m left`
+      timerDiv.textContent = h > 0 ? `${h}h ${m}m left` : `${m}m left`
     }
     popupEl.appendChild(timerDiv)
-
-    if (slot.ticketed) {
-      const badge = document.createElement('div')
-      badge.className = 'car-popup-badge'
-      badge.textContent = 'TICKETED'
-      popupEl.appendChild(badge)
-    }
 
     const btnRow = document.createElement('div')
     btnRow.className = 'car-popup-btns'
 
-    if (isOverstaying && !slot.ticketed) {
-      const ticketBtn = document.createElement('button')
-      ticketBtn.className = 'popup-btn ticket'
-      ticketBtn.textContent = `Ticket $${parkingManager.getTicketFee()}`
-      ticketBtn.addEventListener('click', (e) => {
-        e.stopPropagation()
-        parkingManager.ticketCar(slotIndex)
-        show(slotIndex) // refresh to show badge
-      })
-      btnRow.appendChild(ticketBtn)
+    if (isOverstaying) {
+      if (slot.ticketed) {
+        const ticketedBtn = document.createElement('button')
+        ticketedBtn.className = 'popup-btn ticketed'
+        ticketedBtn.textContent = 'Ticketed!'
+        ticketedBtn.disabled = true
+        btnRow.appendChild(ticketedBtn)
+      } else {
+        const ticketBtn = document.createElement('button')
+        ticketBtn.className = 'popup-btn ticket'
+        ticketBtn.textContent = `Ticket +$${parkingManager.getTicketFee()}`
+        ticketBtn.addEventListener('click', (e) => {
+          e.stopPropagation()
+          parkingManager.ticketCar(slotIndex)
+          show(slotIndex)
+        })
+        btnRow.appendChild(ticketBtn)
+      }
     }
-
-    const extendBtn = document.createElement('button')
-    extendBtn.className = 'popup-btn extend'
-    extendBtn.textContent = 'Extend +1h ($15)'
-    extendBtn.disabled = state.money < 15
-    extendBtn.addEventListener('click', (e) => {
-      e.stopPropagation()
-      parkingManager.extendParking(slotIndex)
-      show(slotIndex) // refresh
-    })
-    btnRow.appendChild(extendBtn)
 
     popupEl.appendChild(btnRow)
     overlay.appendChild(popupEl)
@@ -91,7 +90,6 @@ export function createCarPopup(state, parkingManager, raycasterUtil, lot) {
 
   function update() {
     if (popupEl === null || activeSlotIndex === null) return
-    // Dismiss if the car has left
     const slot = parkingManager.slots[activeSlotIndex]
     if (!slot || !slot.car) {
       hide()

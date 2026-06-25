@@ -3,21 +3,36 @@ import * as THREE from 'three'
 export function createTree(x, z) {
   const group = new THREE.Group()
 
+  // Trunk — brown box (voxel style)
   const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.15, 0.2, 1.2),
-    new THREE.MeshLambertMaterial({ color: 0x8b7355 })
+    new THREE.BoxGeometry(0.4, 1.2, 0.4),
+    new THREE.MeshLambertMaterial({ color: 0x8b6844 })
   )
   trunk.position.set(x, 0.6, z)
   trunk.castShadow = true
   group.add(trunk)
 
-  const foliage = new THREE.Mesh(
-    new THREE.SphereGeometry(0.9, 8, 6),
-    new THREE.MeshLambertMaterial({ color: 0x6aaa7a })
+  // Foliage — stacked green boxes (Crossy Road style)
+  const greens = [0x6ec040, 0x58a838, 0x78d048]
+  const foliageMat = new THREE.MeshLambertMaterial({ color: greens[Math.floor(Math.random() * greens.length)] })
+
+  // Bottom layer — wider
+  const bottom = new THREE.Mesh(
+    new THREE.BoxGeometry(1.6, 0.6, 1.6),
+    foliageMat
   )
-  foliage.position.set(x, 1.6, z)
-  foliage.castShadow = true
-  group.add(foliage)
+  bottom.position.set(x, 1.5, z)
+  bottom.castShadow = true
+  group.add(bottom)
+
+  // Top layer — smaller
+  const top = new THREE.Mesh(
+    new THREE.BoxGeometry(1.1, 0.5, 1.1),
+    foliageMat
+  )
+  top.position.set(x, 2.05, z)
+  top.castShadow = true
+  group.add(top)
 
   return group
 }

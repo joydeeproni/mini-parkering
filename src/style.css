@@ -1,8 +1,27 @@
+@font-face {
+  font-family: 'Berry';
+  src: url('/fonts/TrialBerry-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Berry';
+  src: url('/fonts/TrialBerry-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Switzer';
+  src: url('/fonts/Switzer-Variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
   width: 100%; height: 100%; overflow: hidden;
   background: #111; -webkit-user-select: none; user-select: none;
-  font-family: -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'Switzer', -apple-system, sans-serif;
 }
 #game-canvas { display: block; width: 100%; height: 100%; touch-action: manipulation; }
 #ui-overlay {
@@ -12,70 +31,105 @@ html, body {
 #ui-overlay > * { pointer-events: auto; }
 #ui-overlay > .car-timers-container { pointer-events: none !important; }
 
-/* HUD */
+/* HUD — left-aligned stack */
 #hud {
   position: absolute; top: 0; left: 0; right: 0;
   display: flex; justify-content: space-between; align-items: flex-start;
-  padding: 16px 20px;
+  padding: 28px 24px;
   pointer-events: none;
 }
 #hud > * { pointer-events: auto; }
-#hud-money {
-  background: #000; color: #fff; padding: 10px 16px;
-  font-size: 20px; font-weight: 700; letter-spacing: 0.5px;
-  border: 1px solid rgba(255,255,255,0.15);
-}
-#hud-time {
-  background: #000; color: #fff; padding: 10px 16px;
-  font-size: 18px; font-weight: 500; letter-spacing: 1px;
-  border: 1px solid rgba(255,255,255,0.15);
-}
+#hud-left { display: flex; flex-direction: column; gap: 0; }
 #hud-day {
-  background: #000; color: #fff; padding: 10px 16px;
-  font-size: 16px; font-weight: 500; letter-spacing: 0.5px;
-  border: 1px solid rgba(255,255,255,0.15);
+  font-family: 'Berry', Georgia, serif;
+  font-weight: 700; font-size: 32px; color: #fff;
+  line-height: 1.1; letter-spacing: -0.02em;
 }
-#hud-shop-btn {
-  background: #fff; color: #000; padding: 10px 20px;
-  font-size: 14px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; cursor: pointer; border: none;
+#hud-money {
+  font-family: 'Berry', Georgia, serif;
+  font-weight: 700; font-size: 42px; line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #fff;
 }
-#hud-shop-btn:active { background: #ddd; }
+#hud-money.negative { color: #e05050; }
+#hud-queue {
+  font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7);
+  margin-top: 4px; letter-spacing: -0.01em;
+}
+/* Upgrade bar */
+#upgrade-bar {
+  position: fixed; bottom: 24px; left: 24px;
+  display: flex; gap: 10px; z-index: 15;
+}
+#upgrade-bar.hidden { display: none; }
+.upgrade-btn {
+  width: 56px; height: 56px; border-radius: 14px;
+  background: #333; color: #fff; border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; cursor: pointer;
+  position: relative; transition: transform 0.1s, opacity 0.15s;
+}
+.upgrade-btn:active { transform: scale(0.92); }
+.upgrade-btn.cant-afford { opacity: 0.3; cursor: not-allowed; }
+.upgrade-btn.maxed { opacity: 0.2; cursor: default; }
+.upgrade-btn .upgrade-cost {
+  position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%);
+  font-family: 'Switzer', sans-serif; font-size: 11px; font-weight: 600;
+  color: rgba(0,0,0,0.5); white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(255,255,255,0.6);
+}
+.upgrade-btn .upgrade-level {
+  position: absolute; top: -6px; right: -6px;
+  width: 18px; height: 18px; border-radius: 9px;
+  background: #fff; color: #333;
+  font-family: 'Switzer', sans-serif; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
 
-/* Car Popup */
+/* Car Popup — minimalist timer card */
 .car-popup {
   position: absolute; transform: translate(-50%, -100%);
-  background: #fff; padding: 12px 16px;
-  color: #000; min-width: 150px; text-align: center; z-index: 10;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  min-width: 140px; text-align: center; z-index: 10;
+  border-radius: 12px; overflow: hidden;
+  background: rgba(30,30,30,0.75);
+  backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.car-popup-progress {
+  position: absolute; top: 0; left: 0; bottom: 0;
+  background: rgba(255,255,255,0.12);
+  transition: width 0.5s linear;
+  z-index: 0;
 }
 .car-popup-timer {
-  font-size: 14px; font-weight: 600; margin-bottom: 10px;
-  color: #000; letter-spacing: 0.5px;
+  position: relative; z-index: 1;
+  font-size: 15px; font-weight: 600; padding: 12px 16px;
+  color: #fff; letter-spacing: -0.01em;
 }
-.car-popup-timer.overtime { color: #d00; font-weight: 700; }
-.car-popup-btns { display: flex; gap: 8px; justify-content: center; }
+.car-popup-timer.overtime { color: #e05050; }
+.car-popup-btns {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+}
 .popup-btn {
-  padding: 8px 14px; border: none;
-  font-size: 12px; font-weight: 700; cursor: pointer;
-  font-family: inherit; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 12px 18px; border: none; border-radius: 0;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: inherit; letter-spacing: -0.01em;
+  border-top: 1px solid rgba(0,0,0,0.08);
 }
-.popup-btn.ticket { background: #d00; color: #fff; }
-.popup-btn.extend { background: #000; color: #fff; }
-.popup-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.car-popup-badge {
-  background: #d00; color: #fff; font-size: 10px; font-weight: 700;
-  padding: 3px 8px; display: inline-block; margin-bottom: 8px;
-  text-transform: uppercase; letter-spacing: 1px;
-}
+.popup-btn.ticket { background: #e05050; color: #fff; }
+.popup-btn.ticketed { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.35); font-weight: 600; }
+.popup-btn:disabled { cursor: not-allowed; }
 
 /* Fee Popup */
 .fee-popup {
-  position: absolute; color: #fff; font-size: 18px; font-weight: 700;
-  pointer-events: none; letter-spacing: 0.5px;
+  position: absolute; color: #222; font-size: 18px; font-weight: 600;
+  pointer-events: none; letter-spacing: -0.01em;
+  font-family: 'Berry', Georgia, serif;
   animation: floatUp 1.5s ease-out forwards;
 }
-.fee-popup.penalty { color: #d00; }
+.fee-popup.penalty { color: #e05050; }
 @keyframes floatUp {
   0% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-40px); }
@@ -84,13 +138,13 @@ html, body {
 /* Gate Alert */
 .gate-alert {
   position: absolute; transform: translate(-50%, -100%);
-  background: #d00; color: #fff; padding: 12px 20px;
-  font-size: 14px; font-weight: 700; text-align: center;
-  cursor: pointer; z-index: 10; text-transform: uppercase;
-  letter-spacing: 1px;
+  background: #e05050; color: #fff; padding: 14px 22px;
+  font-size: 15px; font-weight: 600; text-align: center;
+  cursor: pointer; z-index: 10; border-radius: 12px;
+  letter-spacing: -0.01em;
   animation: pulse 0.8s ease-in-out infinite alternate;
 }
-.gate-alert span { font-size: 11px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.gate-alert span { font-size: 12px; font-weight: 450; display: block; margin-top: 2px; opacity: 0.85; }
 @keyframes pulse {
   from { transform: translate(-50%, -100%) scale(1); }
   to { transform: translate(-50%, -100%) scale(1.05); }
@@ -99,146 +153,163 @@ html, body {
 /* Shop */
 .shop-overlay {
   position: absolute; inset: 0;
-  background: rgba(0,0,0,0.95); display: flex; flex-direction: column;
+  background: rgba(0,0,0,0.92); display: flex; flex-direction: column;
   align-items: center; justify-content: center; padding: 24px;
   color: #fff; z-index: 20;
 }
 .shop-overlay h2 {
-  font-size: 14px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 3px; margin-bottom: 8px; color: #fff;
+  font-family: 'Berry', Georgia, serif;
+  font-size: 28px; font-weight: 700;
+  letter-spacing: -0.02em; margin-bottom: 8px; color: #fff;
 }
-.shop-info { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 24px; letter-spacing: 0.5px; }
+.shop-info { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 28px; letter-spacing: -0.01em; }
 .shop-grid {
   display: grid; grid-template-columns: repeat(2, 1fr);
   gap: 1px; max-width: 400px; width: 100%;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.08);
 }
 .shop-card {
-  background: rgba(0,0,0,0.8); padding: 20px 16px;
+  background: rgba(0,0,0,0.7); padding: 22px 16px;
   text-align: center; cursor: pointer; transition: background 0.15s;
 }
-.shop-card:hover { background: rgba(255,255,255,0.08); }
-.shop-card.cant-afford { opacity: 0.3; cursor: not-allowed; }
-.shop-card.maxed { opacity: 0.4; cursor: default; }
+.shop-card:hover { background: rgba(255,255,255,0.06); }
+.shop-card.cant-afford { opacity: 0.25; cursor: not-allowed; }
+.shop-card.maxed { opacity: 0.35; cursor: default; }
 .shop-icon { font-size: 24px; margin-bottom: 8px; }
-.shop-name { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-.shop-desc { font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
-.shop-cost { font-size: 16px; font-weight: 700; color: #fff; }
+.shop-name { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; }
+.shop-desc { font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 8px; }
+.shop-cost { font-size: 18px; font-weight: 700; color: #fff; font-family: 'Berry', Georgia, serif; }
 .shop-close {
-  margin-top: 24px; padding: 12px 40px; background: #fff; color: #000;
-  border: none; font-size: 12px; font-weight: 700; cursor: pointer;
-  font-family: inherit; text-transform: uppercase; letter-spacing: 2px;
+  margin-top: 28px; padding: 14px 44px; background: #fff; color: #222;
+  border: none; font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: inherit; letter-spacing: -0.01em; border-radius: 8px;
 }
 
-/* Start Screen & Game Over */
-.start-screen, .gameover-screen {
+/* Start Screen */
+.start-screen {
   position: absolute; inset: 0;
-  background: rgba(0,0,0,0.85);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: #f5f3ef;
+  display: flex; flex-direction: column; justify-content: space-between;
+  color: #222; z-index: 30;
+}
+.start-top {
+  padding: 80px 32px 0;
+}
+.start-top h1 {
+  font-family: 'Berry', Georgia, serif;
+  font-size: 56px; line-height: 1.0; letter-spacing: -0.03em;
+  font-weight: 700; color: #222;
+}
+.start-subtitle {
+  font-size: 15px; font-weight: 400; color: rgba(0,0,0,0.45);
+  margin-top: 12px; letter-spacing: -0.01em;
+}
+.start-bottom {
+  background: #6b839e;
+  display: flex; flex-direction: column; align-items: center;
+}
+.start-best-label {
+  font-size: 13px; font-weight: 450; color: rgba(255,255,255,0.7);
+  margin-top: 28px; margin-bottom: 4px;
+}
+.start-best-score {
+  font-family: 'Switzer', -apple-system, sans-serif;
+  font-size: 32px; font-weight: 600; color: #fff;
+  letter-spacing: -0.02em; margin-bottom: 20px;
+}
+.start-play {
+  width: 100%; height: 10vh; border: none; border-radius: 0;
+  background: rgba(0,0,0,0.25); color: #fff;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  font-family: inherit; letter-spacing: -0.01em;
+  display: flex; align-items: center; justify-content: center;
+}
+.start-play:active { background: rgba(0,0,0,0.35); }
+
+/* Game Over Screen */
+.gameover-screen {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
   color: #fff; z-index: 30;
 }
-.start-title { text-align: center; margin-bottom: 48px; }
-.title-badge {
-  display: inline-block; width: 56px; height: 56px; line-height: 56px;
-  background: #fff; color: #000; font-size: 32px; font-weight: 700;
-  margin-bottom: 20px;
+.gameover-top {
+  flex: 1; background: #444;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px;
 }
-.start-title h1 {
-  font-size: 48px; line-height: 1; letter-spacing: 8px;
-  font-weight: 700; text-transform: uppercase;
+.gameover-top h1 {
+  font-family: 'Berry', Georgia, serif;
+  font-size: 52px; font-weight: 700; color: #fff;
+  letter-spacing: -0.03em; margin-bottom: 16px;
 }
-.start-buttons { display: flex; flex-direction: column; gap: 1px; min-width: 240px; }
-.start-btn {
-  padding: 16px 24px; border: none;
-  font-size: 13px; font-weight: 700; cursor: pointer;
-  font-family: inherit; text-transform: uppercase; letter-spacing: 2px;
+.gameover-reason {
+  font-size: 15px; color: rgba(255,255,255,0.55);
+  text-align: center; line-height: 1.5; letter-spacing: -0.01em;
 }
-.start-btn.play { background: #fff; color: #000; }
-.start-btn.highscore { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
-.start-btn.options { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); }
-.gameover-screen h1 {
-  font-size: 14px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 6px; color: #d00; margin-bottom: 24px;
+.gameover-bottom {
+  background: #7ecab0; padding: 32px 32px 0;
+  display: flex; flex-direction: column; align-items: center;
 }
-.gameover-reason { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 24px; }
-.gameover-score { font-size: 36px; color: #fff; font-weight: 700; letter-spacing: 1px; }
-.gameover-high { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 20px; }
+.gameover-score {
+  font-family: 'Berry', Georgia, serif;
+  font-size: 34px; font-weight: 700; color: #fff;
+  letter-spacing: -0.02em; margin-bottom: 8px;
+}
 .gameover-stats {
-  display: flex; gap: 24px; font-size: 12px; color: rgba(255,255,255,0.4);
-  margin-bottom: 32px; text-transform: uppercase; letter-spacing: 1px;
+  display: flex; gap: 24px; font-size: 13px; color: rgba(255,255,255,0.7);
+  margin-bottom: 24px; letter-spacing: -0.01em;
 }
+.gameover-play {
+  width: calc(100% + 64px); margin-left: -32px; margin-right: -32px;
+  height: 10vh; border: none; border-radius: 0;
+  background: rgba(0,0,0,0.15); color: #fff;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  font-family: inherit; letter-spacing: -0.01em;
+  display: flex; align-items: center; justify-content: center;
+}
+.gameover-play:active { background: rgba(0,0,0,0.25); }
 
-/* Floating car timers */
+/* Progress bar car timers */
 .car-timers-container { position: absolute; inset: 0; pointer-events: none; }
-.car-timer {
+.car-timer-bar {
   position: absolute; transform: translate(-50%, -100%);
-  background: rgba(0,0,0,0.8); color: #fff; padding: 2px 6px;
-  font-size: 10px; font-weight: 700; white-space: nowrap;
-  letter-spacing: 0.5px;
+  width: 36px; height: 4px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 2px;
+  overflow: hidden;
 }
-.car-timer.overtime { color: #d00; }
-.car-timer.ticketed { color: #f90; }
+.car-timer-fill {
+  height: 100%; width: 100%;
+  border-radius: 2px;
+  transition: width 0.5s linear;
+}
+.car-timer-fill.ok { background: #6bbd6b; }
+.car-timer-fill.warn { background: #e8a840; }
+.car-timer-fill.danger { background: #e05050; }
+.car-timer-fill.overtime { background: #e05050; }
 
-/* Debug Panel */
-.debug-panel {
-  position: fixed; top: 8px; right: 8px; z-index: 100;
-  background: rgba(20,20,25,0.92); color: #e0ddd5;
-  font-size: 11px; width: 260px; max-height: 80vh; overflow-y: auto;
-  border: 1px solid rgba(255,255,255,0.1);
-  pointer-events: auto;
+.car-timer-bar.needs-action {
+  position: relative;
 }
-.debug-header {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 12px; font-weight: 700; letter-spacing: 2px;
-  font-size: 10px; text-transform: uppercase;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+.car-timer-bar.needs-action::after {
+  content: '';
+  position: absolute; inset: -3px;
+  border: 1.5px solid rgba(224,80,80,0.5);
+  border-radius: 4px;
+  animation: timerPulse 1.2s ease-in-out infinite;
 }
-.debug-toggle {
-  background: none; border: none; color: #e0ddd5;
-  font-size: 14px; cursor: pointer; padding: 0 4px;
+@keyframes timerPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
 }
-.debug-body { padding: 8px 12px; }
-.debug-folder {
-  font-weight: 700; font-size: 10px; text-transform: uppercase;
-  letter-spacing: 1px; cursor: pointer; padding: 6px 0;
-  color: rgba(255,255,255,0.6); list-style: none;
-}
-.debug-folder::marker { display: none; }
-.debug-folder::-webkit-details-marker { display: none; }
-.debug-folder-body { padding-left: 4px; }
-.debug-row {
-  display: grid; grid-template-columns: 1fr 80px 36px;
-  align-items: center; gap: 6px; padding: 3px 0;
-}
-.debug-row label { font-size: 10px; color: rgba(255,255,255,0.5); }
-.debug-row input[type="range"] {
-  width: 100%; height: 3px; -webkit-appearance: none;
-  background: rgba(255,255,255,0.15); outline: none;
-}
-.debug-row input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 10px; height: 10px;
-  background: #e0ddd5; border-radius: 0; cursor: pointer;
-}
-.debug-value {
-  font-size: 10px; text-align: right; font-variant-numeric: tabular-nums;
-  color: rgba(255,255,255,0.7);
-}
-.debug-reset {
-  margin-top: 10px; width: 100%; padding: 6px;
-  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5);
-  border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
-  font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; font-family: inherit;
-}
-.debug-reset:hover { background: rgba(255,255,255,0.15); }
 
 /* Mobile */
 @media (max-width: 600px) {
-  .start-title h1 { font-size: 32px; letter-spacing: 4px; }
-  #hud { padding: 10px 12px; }
-  #hud-money, #hud-time, #hud-day { font-size: 13px; padding: 8px 10px; }
-  #hud-shop-btn { padding: 8px 14px; font-size: 12px; }
-  .shop-grid { grid-template-columns: repeat(2, 1fr); }
-  .car-popup { min-width: 120px; }
-  .popup-btn { padding: 8px 10px; font-size: 11px; }
+  .start-top h1 { font-size: 44px; }
+  .start-top { padding: 60px 24px 0; }
+  #hud { padding: 20px 16px; }
+  #hud-day { font-size: 26px; }
+  #hud-money { font-size: 34px; }
+  .car-popup { min-width: 140px; }
+  .popup-btn { padding: 10px 14px; font-size: 13px; }
 }
